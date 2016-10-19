@@ -52,6 +52,10 @@
 	
 	var _Resources2 = _interopRequireDefault(_Resources);
 	
+	var _Player = __webpack_require__(10);
+	
+	var _Player2 = _interopRequireDefault(_Player);
+	
 	var _Sprite = __webpack_require__(2);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
@@ -88,6 +92,7 @@
 	    this.main = this.main.bind(this);
 	    this.update = this.update.bind(this);
 	    this.render = this.render.bind(this);
+	    this._getRect = this._getRect.bind(this);
 	    this.handleInput = this.handleInput.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
 	    this.updateEntities = this.updateEntities.bind(this);
@@ -130,7 +135,7 @@
 	    value: function handleInput(dt) {
 	      var input = window.input;
 	
-	      if (input.isDown('UP')) {
+	      if (input.isDown('UP') || input.isDown('SPACE')) {
 	        this.player.vel[1] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      } else if (input.isDown('DOWN')) {
 	        this.player.vel[1] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
@@ -245,12 +250,12 @@
 	      _Input2.default.setup();
 	
 	      // sets game state
-	      this.player = {
+	      this.player = new _Player2.default({
 	        type: 'player',
-	        pos: [450, 500],
+	        pos: [450, 300],
 	        vel: [0, 0],
 	        sprite: SPRITES.PLAYER_IDLE
-	      };
+	      });
 	
 	      this.enemies = [];
 	      this.crate = {};
@@ -262,11 +267,9 @@
 	  }, {
 	    key: '_getRect',
 	    value: function _getRect(entity) {
-	      var pos = entity.pos;
-	      var sprite = entity.sprite;
-	
+	      var hitbox = entity.hitbox();
 	      return {
-	        x: pos[0], y: pos[1], width: sprite.size[0], height: sprite.size[1]
+	        x: hitbox[0], y: hitbox[1], width: hitbox[2], height: hitbox[3]
 	      };
 	    }
 	  }, {
@@ -608,6 +611,7 @@
 	  value: true
 	});
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 3; // px/sec
+	var GRAVITY = exports.GRAVITY = 0.5; // px/sec^2
 
 /***/ },
 /* 6 */,
@@ -688,71 +692,157 @@
 	
 	var STAGE_1 = exports.STAGE_1 = [
 	// top walls
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [WT, 0],
-	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
-	}, {
-	  type: 'wall',
+	  size: [450 - OW1 / 2 - WT, WT]
+	}), new _Wall2.default({
 	  pos: [450 + OW1 / 2, 0],
-	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
-	},
+	  size: [450 - OW1 / 2 - WT, WT]
+	}),
 	
 	// bottom walls
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [WT, 600 - WT],
-	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
-	}, {
-	  type: 'wall',
+	  size: [450 - OW1 / 2 - WT, WT]
+	}), new _Wall2.default({
 	  pos: [450 + OW1 / 2, 600 - WT],
-	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
-	},
+	  size: [450 - OW1 / 2 - WT, WT]
+	}),
 	
 	// left wall
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [0, 0],
-	  sprite: new _Wall2.default({ size: [WT, 600] })
-	},
+	  size: [WT, 600]
+	}),
 	
 	// right wall
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [900 - WT, 0],
-	  sprite: new _Wall2.default({ size: [WT, 600] })
-	},
+	  size: [WT, 600]
+	}),
 	
 	// left ledge
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [WT, 300 - HO1],
-	  sprite: new _Wall2.default({ size: [SLW1, WT] })
-	},
+	  size: [SLW1, WT]
+	}),
 	
 	// right ledge
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [900 - WT - SLW1, 300 - HO1],
-	  sprite: new _Wall2.default({ size: [SLW1, WT] })
-	},
+	  size: [SLW1, WT]
+	}),
 	
 	// bottom-middle ledge
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [SLW1 + WT + 100, 400 - HO1],
-	  sprite: new _Wall2.default({ size: [MLW1, WT] })
-	},
+	  size: [MLW1, WT]
+	}),
 	
 	// upper-middle ledge
-	{
-	  type: 'wall',
+	new _Wall2.default({
 	  pos: [SLW1 + WT + 100, 170 - HO1],
-	  sprite: new _Wall2.default({ size: [MLW1, WT] })
-	}];
+	  size: [MLW1, WT]
+	})];
 
 /***/ },
 /* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _WallSprite = __webpack_require__(11);
+	
+	var _WallSprite2 = _interopRequireDefault(_WallSprite);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Wall = function () {
+	  function Wall(opts) {
+	    _classCallCheck(this, Wall);
+	
+	    var pos = opts.pos;
+	    var size = opts.size;
+	
+	    this.type = 'wall';
+	    this.size = size;
+	    this.pos = pos;
+	    this.sprite = new _WallSprite2.default(size);
+	
+	    this.hitbox = this.hitbox.bind(this);
+	  }
+	
+	  _createClass(Wall, [{
+	    key: 'hitbox',
+	    value: function hitbox() {
+	      var pos = this.pos;
+	      var size = this.size;
+	
+	      return [].concat(pos).concat(size);
+	    }
+	  }]);
+	
+	  return Wall;
+	}();
+	
+	exports.default = Wall;
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Player = function () {
+	  function Player(opts) {
+	    _classCallCheck(this, Player);
+	
+	    var pos = opts.pos;
+	    var vel = opts.vel;
+	    var sprite = opts.sprite;
+	
+	    this.type = 'player';
+	    this.pos = pos;
+	    this.vel = vel;
+	    this.sprite = sprite;
+	    this.isJumping = false;
+	
+	    this.hitbox = this.hitbox.bind(this);
+	  }
+	
+	  _createClass(Player, [{
+	    key: 'hitbox',
+	    value: function hitbox() {
+	      var pos = this.pos;
+	      var sprite = this.sprite;
+	
+	      return [pos[0] + 20, pos[1] + 15, 27, 49];
+	    }
+	  }]);
+	
+	  return Player;
+	}();
+	
+	exports.default = Player;
+
+/***/ },
+/* 11 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -765,16 +855,14 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Wall = function () {
-	  function Wall(opts) {
-	    _classCallCheck(this, Wall);
-	
-	    var size = opts.size;
+	var WallSprite = function () {
+	  function WallSprite(size) {
+	    _classCallCheck(this, WallSprite);
 	
 	    this.size = size;
 	  }
 	
-	  _createClass(Wall, [{
+	  _createClass(WallSprite, [{
 	    key: "render",
 	    value: function render(ctx) {
 	      var size = this.size;
@@ -784,10 +872,10 @@
 	    }
 	  }]);
 	
-	  return Wall;
+	  return WallSprite;
 	}();
 	
-	exports.default = Wall;
+	exports.default = WallSprite;
 
 /***/ }
 /******/ ]);
