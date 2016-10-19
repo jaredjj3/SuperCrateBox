@@ -127,6 +127,7 @@
 	        this.player.vel[1] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      } else {
 	        this.player.vel[1] = 0;
+	        this.player.state = 'idle';
 	      }
 	
 	      if (input.isDown('LEFT')) {
@@ -135,6 +136,7 @@
 	        this.player.vel[0] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      } else {
 	        this.player.vel[0] = 0;
+	        this.player.state = 'idle';
 	      }
 	
 	      this.player.pos[0] += this.player.vel[0];
@@ -184,7 +186,7 @@
 	      this.ctx = canvas.getContext('2d');
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay_idle.png']);
+	      _Resources2.default.load(['./lib/img/jay_running.png']);
 	      var init = function init() {
 	        _this.main();
 	      };
@@ -194,16 +196,17 @@
 	      _Input2.default.setup();
 	
 	      // sets game state
-	      var url = './lib/img/jay_idle.png';
+	      var url = './lib/img/jay_running.png';
 	      var pos = [0, 0];
 	      var size = [64, 64];
 	      var speed = 13;
-	      var frames = FRAMES.PLAYER_IDLE;
+	      var frames = FRAMES.PLAYER_RUN;
 	      var dir = 'horizontal';
 	      var once = false;
 	      this.player = {
 	        pos: [0, 0],
 	        vel: [0, 0],
+	        state: 'idle',
 	        sprite: new _Sprite2.default(url, pos, size, speed, frames, dir, once)
 	      };
 	
@@ -523,6 +526,7 @@
 	  value: true
 	});
 	var PLAYER_IDLE = exports.PLAYER_IDLE = [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0];
+	var PLAYER_RUN = exports.PLAYER_RUN = [5, 6, 7, 8, 9];
 
 /***/ },
 /* 5 */
@@ -533,7 +537,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 2; // px/sec
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 3; // px/sec
 
 /***/ }
 /******/ ]);
