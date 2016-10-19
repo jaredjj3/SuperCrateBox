@@ -526,7 +526,7 @@
 	  value: true
 	});
 	var PLAYER_IDLE = exports.PLAYER_IDLE = [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0];
-	var PLAYER_RUN = exports.PLAYER_RUN = [5, 6, 7, 8, 9];
+	var PLAYER_RUN = exports.PLAYER_RUN = [5, 6, 7, 8, 9, 8, 7, 6];
 
 /***/ },
 /* 5 */
