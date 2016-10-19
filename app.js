@@ -76,6 +76,8 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var SuperCrateBox = function () {
@@ -87,9 +89,11 @@
 	    this.update = this.update.bind(this);
 	    this.render = this.render.bind(this);
 	    this.handleInput = this.handleInput.bind(this);
+	    this.renderEntity = this.renderEntity.bind(this);
 	    this.updateEntities = this.updateEntities.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
-	    this.renderEntity = this.renderEntity.bind(this);
+	    this.checkCollision = this.checkCollision.bind(this);
+	    this.checkCollisions = this.checkCollisions.bind(this);
 	  }
 	
 	  _createClass(SuperCrateBox, [{
@@ -118,6 +122,7 @@
 	    key: 'update',
 	    value: function update(dt) {
 	      this.handleInput(dt);
+	      this.checkCollisions([this.player]);
 	      this.updateEntities(dt);
 	    }
 	  }, {
@@ -155,6 +160,34 @@
 	      this.player.pos[1] += this.player.vel[1];
 	    }
 	  }, {
+	    key: 'checkCollision',
+	    value: function checkCollision(entity) {
+	      var walls = this.stage;
+	      var enemies = this.enemies;
+	
+	      var collisionMap = [].concat(_toConsumableArray(walls), _toConsumableArray(enemies));
+	
+	      var rect1 = this._getRect(entity);
+	      for (var i = 0; i < collisionMap.length; i++) {
+	        var otherEntity = collisionMap[i];
+	        var rect2 = this._getRect(otherEntity);
+	
+	        if (this._collisionDetected(rect1, rect2)) {
+	          if (entity.type === 'player' && otherEntity.type === 'wall') {
+	            this._playerHitWall();
+	          }
+	        }
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: 'checkCollisions',
+	    value: function checkCollisions(list) {
+	      for (var i = 0; i < list.length; i++) {
+	        this.checkCollision(list[i]);
+	      }
+	    }
+	  }, {
 	    key: 'updateEntities',
 	    value: function updateEntities(dt) {
 	      this.player.sprite.update(dt);
@@ -173,13 +206,6 @@
 	      renderEntities(stage);
 	    }
 	  }, {
-	    key: 'renderEntities',
-	    value: function renderEntities(list) {
-	      for (var i = 0; i < list.length; i++) {
-	        this.renderEntity(list[i]);
-	      }
-	    }
-	  }, {
 	    key: 'renderEntity',
 	    value: function renderEntity(entity) {
 	      var ctx = this.ctx;
@@ -188,6 +214,13 @@
 	      ctx.translate(entity.pos[0], entity.pos[1]);
 	      entity.sprite.render(ctx);
 	      ctx.restore();
+	    }
+	  }, {
+	    key: 'renderEntities',
+	    value: function renderEntities(list) {
+	      for (var i = 0; i < list.length; i++) {
+	        this.renderEntity(list[i]);
+	      }
 	    }
 	
 	    // private
@@ -213,6 +246,7 @@
 	
 	      // sets game state
 	      this.player = {
+	        type: 'player',
 	        pos: [450, 500],
 	        vel: [0, 0],
 	        sprite: SPRITES.PLAYER_IDLE
@@ -224,6 +258,31 @@
 	
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
+	    }
+	  }, {
+	    key: '_getRect',
+	    value: function _getRect(entity) {
+	      var pos = entity.pos;
+	      var sprite = entity.sprite;
+	
+	      return {
+	        x: pos[0], y: pos[1], width: sprite.size[0], height: sprite.size[1]
+	      };
+	    }
+	  }, {
+	    key: '_collisionDetected',
+	    value: function _collisionDetected(rect1, rect2) {
+	      if (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y) {
+	        return true;
+	      } else {
+	        return false;
+	      }
+	    }
+	  }, {
+	    key: '_playerHitWall',
+	    value: function _playerHitWall() {
+	      this.player.pos[0] -= this.player.vel[0];
+	      this.player.pos[1] -= this.player.vel[1];
 	    }
 	  }]);
 	
@@ -425,7 +484,7 @@
 	          return;
 	        }
 	      } else {
-	        frame = 0;
+	        frame = frames[0];
 	      }
 	
 	      var x = pos[0];
@@ -438,6 +497,7 @@
 	      }
 	
 	      if (facing === 'left') {
+	        ctx.translate(size[0], 0);
 	        ctx.scale(-1, 1);
 	      }
 	
@@ -621,64 +681,74 @@
 	var WT = 30;
 	
 	// constants related to stage 1
-	var SLW1 = 150; // SIDE_LEDGE_WIDTH_1
-	var MLW1 = 340; // MID_LEDGE_WIDTH_1
+	var SLW1 = 170; // SIDE_LEDGE_WIDTH_1
+	var MLW1 = 300; // MID_LEDGE_WIDTH_1
 	var HO1 = 20; // HEIGHT_OFFSET_1
 	var OW1 = 150; // OPENING_WIDTH_1
 	
 	var STAGE_1 = exports.STAGE_1 = [
 	// top walls
 	{
+	  type: 'wall',
 	  pos: [WT, 0],
-	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
 	}, {
+	  type: 'wall',
 	  pos: [450 + OW1 / 2, 0],
-	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
 	},
 	
 	// bottom walls
 	{
+	  type: 'wall',
 	  pos: [WT, 600 - WT],
-	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
 	}, {
+	  type: 'wall',
 	  pos: [450 + OW1 / 2, 600 - WT],
-	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	  sprite: new _Wall2.default({ size: [450 - OW1 / 2 - WT, WT] })
 	},
 	
 	// left wall
 	{
+	  type: 'wall',
 	  pos: [0, 0],
-	  sprite: new _Wall2.default({ width: WT, height: 600 })
+	  sprite: new _Wall2.default({ size: [WT, 600] })
 	},
 	
 	// right wall
 	{
+	  type: 'wall',
 	  pos: [900 - WT, 0],
-	  sprite: new _Wall2.default({ width: WT, height: 600 })
+	  sprite: new _Wall2.default({ size: [WT, 600] })
 	},
 	
 	// left ledge
 	{
+	  type: 'wall',
 	  pos: [WT, 300 - HO1],
-	  sprite: new _Wall2.default({ width: SLW1, height: WT })
+	  sprite: new _Wall2.default({ size: [SLW1, WT] })
 	},
 	
 	// right ledge
 	{
+	  type: 'wall',
 	  pos: [900 - WT - SLW1, 300 - HO1],
-	  sprite: new _Wall2.default({ width: SLW1, height: WT })
+	  sprite: new _Wall2.default({ size: [SLW1, WT] })
 	},
 	
 	// bottom-middle ledge
 	{
+	  type: 'wall',
 	  pos: [SLW1 + WT + 100, 400 - HO1],
-	  sprite: new _Wall2.default({ width: MLW1, height: WT })
+	  sprite: new _Wall2.default({ size: [MLW1, WT] })
 	},
 	
 	// upper-middle ledge
 	{
-	  pos: [SLW1 + WT + 100, 200 - HO1],
-	  sprite: new _Wall2.default({ width: MLW1, height: WT })
+	  type: 'wall',
+	  pos: [SLW1 + WT + 100, 170 - HO1],
+	  sprite: new _Wall2.default({ size: [MLW1, WT] })
 	}];
 
 /***/ },
@@ -699,21 +769,18 @@
 	  function Wall(opts) {
 	    _classCallCheck(this, Wall);
 	
-	    var width = opts.width;
-	    var height = opts.height;
+	    var size = opts.size;
 	
-	    this.width = width;
-	    this.height = height;
+	    this.size = size;
 	  }
 	
 	  _createClass(Wall, [{
 	    key: "render",
 	    value: function render(ctx) {
-	      var width = this.width;
-	      var height = this.height;
+	      var size = this.size;
 	
 	      ctx.fillStyle = "black";
-	      ctx.fillRect(0, 0, width, height);
+	      ctx.fillRect(0, 0, size[0], size[1]);
 	    }
 	  }]);
 	
