@@ -60,9 +60,9 @@
 	
 	var _Input2 = _interopRequireDefault(_Input);
 	
-	var _FRAMES = __webpack_require__(4);
+	var _SPRITES = __webpack_require__(7);
 	
-	var FRAMES = _interopRequireWildcard(_FRAMES);
+	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
 	var _CONSTANTS = __webpack_require__(5);
 	
@@ -127,7 +127,6 @@
 	        this.player.vel[1] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      } else {
 	        this.player.vel[1] = 0;
-	        this.player.state = 'idle';
 	      }
 	
 	      if (input.isDown('LEFT')) {
@@ -136,7 +135,16 @@
 	        this.player.vel[0] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      } else {
 	        this.player.vel[0] = 0;
-	        this.player.state = 'idle';
+	      }
+	
+	      var vel = this.player.vel;
+	
+	      if (vel[0] > 0) {
+	        this.player.sprite = SPRITES.PLAYER_RUN_RIGHT;
+	      } else if (vel[0] < 0) {
+	        this.player.sprite = SPRITES.PLAYER_RUN_LEFT;
+	      } else {
+	        this.player.sprite = SPRITES.PLAYER_IDLE;
 	      }
 	
 	      this.player.pos[0] += this.player.vel[0];
@@ -186,7 +194,7 @@
 	      this.ctx = canvas.getContext('2d');
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay_running.png']);
+	      _Resources2.default.load(['./lib/img/jay_idle.png', './lib/img/jay_running.png']);
 	      var init = function init() {
 	        _this.main();
 	      };
@@ -196,18 +204,10 @@
 	      _Input2.default.setup();
 	
 	      // sets game state
-	      var url = './lib/img/jay_running.png';
-	      var pos = [0, 0];
-	      var size = [64, 64];
-	      var speed = 13;
-	      var frames = FRAMES.PLAYER_RUN;
-	      var dir = 'horizontal';
-	      var once = false;
 	      this.player = {
-	        pos: [0, 0],
+	        pos: [450, 500],
 	        vel: [0, 0],
-	        state: 'idle',
-	        sprite: new _Sprite2.default(url, pos, size, speed, frames, dir, once)
+	        sprite: SPRITES.PLAYER_IDLE
 	      };
 	
 	      this.enemies = [];
@@ -260,14 +260,9 @@
 	    value: function load(arg) {
 	      var _load = this._load;
 	
-	
-	      if (arg instanceof Array) {
-	        arg.forEach(function (url) {
-	          return _load(url);
-	        });
-	      } else {
-	        _load(arg);
-	      }
+	      arg.forEach(function (url) {
+	        return _load(url);
+	      });
 	    }
 	  }, {
 	    key: 'get',
@@ -362,8 +357,17 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var Sprite = function () {
-	  function Sprite(url, pos, size, speed, frames, dir, once) {
+	  function Sprite(opts) {
 	    _classCallCheck(this, Sprite);
+	
+	    var pos = opts.pos;
+	    var size = opts.size;
+	    var speed = opts.speed;
+	    var frames = opts.frames;
+	    var url = opts.url;
+	    var dir = opts.dir;
+	    var once = opts.once;
+	    var facing = opts.facing;
 	
 	    this.pos = pos;
 	    this.size = size;
@@ -373,6 +377,7 @@
 	    this.dir = dir;
 	    this.once = once;
 	    this._index = 0;
+	    this.facing = facing;
 	
 	    this.update = this.update.bind(this);
 	    this.render = this.render.bind(this);
@@ -396,6 +401,7 @@
 	      var _index = this._index;
 	      var dir = this.dir;
 	      var url = this.url;
+	      var facing = this.facing;
 	
 	      var frame = void 0;
 	
@@ -420,6 +426,11 @@
 	      } else {
 	        x += frame * size[0];
 	      }
+	
+	      if (facing === 'left') {
+	        ctx.scale(-1, 1);
+	      }
+	
 	      ctx.drawImage(_Resources2.default.get(url), x, y, size[0], size[1], 0, 0, size[0], size[1]);
 	    }
 	  }]);
@@ -517,18 +528,7 @@
 	exports.default = new Input();
 
 /***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var PLAYER_IDLE = exports.PLAYER_IDLE = [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0];
-	var PLAYER_RUN = exports.PLAYER_RUN = [5, 6, 7, 8, 9, 8, 7, 6];
-
-/***/ },
+/* 4 */,
 /* 5 */
 /***/ function(module, exports) {
 
@@ -538,6 +538,57 @@
 	  value: true
 	});
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 3; // px/sec
+
+/***/ },
+/* 6 */,
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
+	
+	var _Sprite = __webpack_require__(2);
+	
+	var _Sprite2 = _interopRequireDefault(_Sprite);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var PLAYER_IDLE = exports.PLAYER_IDLE = new _Sprite2.default({
+	  url: './lib/img/jay_idle.png',
+	  pos: [0, 0],
+	  frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+	  size: [64, 64],
+	  speed: 13,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
+	
+	var PLAYER_RUN_RIGHT = exports.PLAYER_RUN_RIGHT = new _Sprite2.default({
+	  url: './lib/img/jay_running.png',
+	  pos: [0, 0],
+	  frames: [5, 6, 7, 8, 9, 8, 7, 6],
+	  size: [64, 64],
+	  speed: 13,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
+	
+	var PLAYER_RUN_LEFT = exports.PLAYER_RUN_LEFT = new _Sprite2.default({
+	  url: './lib/img/jay_running.png',
+	  pos: [0, 0],
+	  frames: [6, 7, 8, 9, 8, 7, 6, 5],
+	  size: [64, 64],
+	  speed: 13,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'left'
+	});
 
 /***/ }
 /******/ ]);
