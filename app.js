@@ -64,6 +64,10 @@
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
+	var _STAGES = __webpack_require__(8);
+	
+	var STAGES = _interopRequireWildcard(_STAGES);
+	
 	var _CONSTANTS = __webpack_require__(5);
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
@@ -159,9 +163,14 @@
 	    key: 'render',
 	    value: function render() {
 	      var renderEntity = this.renderEntity;
+	      var renderEntities = this.renderEntities;
 	      var player = this.player;
+	      var stage = this.stage;
+	      var ctx = this.ctx;
 	
+	      ctx.clearRect(0, 0, 900, 600);
 	      renderEntity(player);
+	      renderEntities(stage);
 	    }
 	  }, {
 	    key: 'renderEntities',
@@ -175,7 +184,6 @@
 	    value: function renderEntity(entity) {
 	      var ctx = this.ctx;
 	
-	      ctx.clearRect(0, 0, 900, 600);
 	      ctx.save();
 	      ctx.translate(entity.pos[0], entity.pos[1]);
 	      entity.sprite.render(ctx);
@@ -212,6 +220,7 @@
 	
 	      this.enemies = [];
 	      this.crate = {};
+	      this.stage = STAGES.STAGE_1;
 	
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
@@ -407,6 +416,7 @@
 	
 	      if (speed > 0) {
 	        var max = this.frames.length;
+	        // idx is the ith picture
 	        var idx = Math.floor(_index);
 	        frame = frames[idx % max];
 	
@@ -589,6 +599,128 @@
 	  once: false,
 	  facing: 'left'
 	});
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.STAGE_1 = undefined;
+	
+	var _Wall = __webpack_require__(9);
+	
+	var _Wall2 = _interopRequireDefault(_Wall);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	// WALL_THICKNESS
+	var WT = 30;
+	
+	// constants related to stage 1
+	var SLW1 = 150; // SIDE_LEDGE_WIDTH_1
+	var MLW1 = 340; // MID_LEDGE_WIDTH_1
+	var HO1 = 20; // HEIGHT_OFFSET_1
+	var OW1 = 150; // OPENING_WIDTH_1
+	
+	var STAGE_1 = exports.STAGE_1 = [
+	// top walls
+	{
+	  pos: [WT, 0],
+	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	}, {
+	  pos: [450 + OW1 / 2, 0],
+	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	},
+	
+	// bottom walls
+	{
+	  pos: [WT, 600 - WT],
+	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	}, {
+	  pos: [450 + OW1 / 2, 600 - WT],
+	  sprite: new _Wall2.default({ width: 450 - OW1 / 2 - WT, height: WT })
+	},
+	
+	// left wall
+	{
+	  pos: [0, 0],
+	  sprite: new _Wall2.default({ width: WT, height: 600 })
+	},
+	
+	// right wall
+	{
+	  pos: [900 - WT, 0],
+	  sprite: new _Wall2.default({ width: WT, height: 600 })
+	},
+	
+	// left ledge
+	{
+	  pos: [WT, 300 - HO1],
+	  sprite: new _Wall2.default({ width: SLW1, height: WT })
+	},
+	
+	// right ledge
+	{
+	  pos: [900 - WT - SLW1, 300 - HO1],
+	  sprite: new _Wall2.default({ width: SLW1, height: WT })
+	},
+	
+	// bottom-middle ledge
+	{
+	  pos: [SLW1 + WT + 100, 400 - HO1],
+	  sprite: new _Wall2.default({ width: MLW1, height: WT })
+	},
+	
+	// upper-middle ledge
+	{
+	  pos: [SLW1 + WT + 100, 200 - HO1],
+	  sprite: new _Wall2.default({ width: MLW1, height: WT })
+	}];
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Wall = function () {
+	  function Wall(opts) {
+	    _classCallCheck(this, Wall);
+	
+	    var width = opts.width;
+	    var height = opts.height;
+	
+	    this.width = width;
+	    this.height = height;
+	  }
+	
+	  _createClass(Wall, [{
+	    key: "render",
+	    value: function render(ctx) {
+	      var width = this.width;
+	      var height = this.height;
+	
+	      ctx.fillStyle = "black";
+	      ctx.fillRect(0, 0, width, height);
+	    }
+	  }]);
+	
+	  return Wall;
+	}();
+	
+	exports.default = Wall;
 
 /***/ }
 /******/ ]);
