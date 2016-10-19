@@ -64,6 +64,10 @@
 	
 	var FRAMES = _interopRequireWildcard(_FRAMES);
 	
+	var _CONSTANTS = __webpack_require__(5);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -94,7 +98,6 @@
 	  }, {
 	    key: 'main',
 	    value: function main() {
-	      console.log('main');
 	      var update = this.update;
 	      var render = this.render;
 	
@@ -117,6 +120,25 @@
 	    key: 'handleInput',
 	    value: function handleInput(dt) {
 	      var input = window.input;
+	
+	      if (input.isDown('UP')) {
+	        this.player.vel[1] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	      } else if (input.isDown('DOWN')) {
+	        this.player.vel[1] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	      } else {
+	        this.player.vel[1] = 0;
+	      }
+	
+	      if (input.isDown('LEFT')) {
+	        this.player.vel[0] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	      } else if (input.isDown('RIGHT')) {
+	        this.player.vel[0] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	      } else {
+	        this.player.vel[0] = 0;
+	      }
+	
+	      this.player.pos[0] += this.player.vel[0];
+	      this.player.pos[1] += this.player.vel[1];
 	    }
 	  }, {
 	    key: 'updateEntities',
@@ -169,17 +191,19 @@
 	      _Resources2.default.onReady(init);
 	
 	      // Sets event listeners
+	      _Input2.default.setup();
 	
 	      // sets game state
 	      var url = './lib/img/jay_idle.png';
 	      var pos = [0, 0];
 	      var size = [64, 64];
 	      var speed = 13;
-	      var frames = FRAMES.PLAYER_BREATH_FRAMES;
+	      var frames = FRAMES.PLAYER_IDLE;
 	      var dir = 'horizontal';
 	      var once = false;
 	      this.player = {
 	        pos: [0, 0],
+	        vel: [0, 0],
 	        sprite: new _Sprite2.default(url, pos, size, speed, frames, dir, once)
 	      };
 	
@@ -421,6 +445,8 @@
 	    _classCallCheck(this, Input);
 	
 	    this.pressedKeys = {};
+	
+	    this.setKey = this.setKey.bind(this);
 	  }
 	
 	  _createClass(Input, [{
@@ -444,49 +470,48 @@
 	          return _this.pressedKeys[key.toUpperCase()];
 	        }
 	      };
+	
+	      window.addEventListener("keydown", function (e) {
+	        // prevent scrolling with arrow keys
+	        if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+	          e.preventDefault();
+	        }
+	      }, false);
 	    }
 	  }, {
 	    key: 'setKey',
 	    value: function setKey(event, status) {
-	      var pressedKeys = this.pressedKeys;
-	
 	      var code = event.keyCode;
 	      var key = void 0;
 	
 	      switch (code) {
-	
 	        case 32:
 	          key = 'SPACE';
 	          break;
-	
 	        case 37:
 	          key = 'LEFT';
 	          break;
-	
 	        case 38:
 	          key = 'UP';
 	          break;
-	
 	        case 39:
 	          key = 'RIGHT';
 	          break;
-	
 	        case 40:
 	          key = 'DOWN';
 	          break;
-	
 	        default:
 	          key = String.fromCharCode(code);
 	      }
 	
-	      pressedKeys[key] = status;
+	      this.pressedKeys[key] = status;
 	    }
 	  }]);
 	
 	  return Input;
 	}();
 	
-	exports.default = Input;
+	exports.default = new Input();
 
 /***/ },
 /* 4 */
@@ -497,7 +522,18 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var PLAYER_BREATH_FRAMES = exports.PLAYER_BREATH_FRAMES = [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0];
+	var PLAYER_IDLE = exports.PLAYER_IDLE = [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0];
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 2; // px/sec
 
 /***/ }
 /******/ ]);
