@@ -2,10 +2,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .canvas_container {
-  border: 1px solid black;
   width: 900px;
   height: 600px;
+}
+
+.single_digits {
+  position: absolute;
+  font-size: 64px;
+  color: black;
+  top: -30px;
+  left: 475px;
+}
+
+.double_digits {
+  position: absolute;
+  font-size: 64px;
+  color: black;
+  top: -30px;
+  left: 462px;
 }

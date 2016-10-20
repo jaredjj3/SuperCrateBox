@@ -94,6 +94,7 @@
 	
 	    this.play = this.play.bind(this);
 	    this.main = this.main.bind(this);
+	    this._reset = this._reset.bind(this);
 	    this.update = this.update.bind(this);
 	    this.render = this.render.bind(this);
 	    this._getRect = this._getRect.bind(this);
@@ -104,6 +105,7 @@
 	    this.renderEntities = this.renderEntities.bind(this);
 	    this.checkCollision = this.checkCollision.bind(this);
 	    this.checkCollisions = this.checkCollisions.bind(this);
+	    this.checkPlayerBounds = this.checkPlayerBounds.bind(this);
 	  }
 	
 	  _createClass(SuperCrateBox, [{
@@ -115,6 +117,10 @@
 	  }, {
 	    key: 'main',
 	    value: function main() {
+	      if (this.gameOver) {
+	        this._reset();
+	        return;
+	      }
 	      var update = this.update;
 	      var render = this.render;
 	
@@ -133,6 +139,14 @@
 	      this.handleInput(dt);
 	      this.updateEntities(dt);
 	      this.checkCollisions([this.player, this.crate]);
+	      this.checkPlayerBounds();
+	    }
+	  }, {
+	    key: 'checkPlayerBounds',
+	    value: function checkPlayerBounds() {
+	      if (this.player.pos[1] > 570) {
+	        this.gameOver = true;
+	      }
 	    }
 	  }, {
 	    key: 'handleInput',
@@ -199,6 +213,9 @@
 	
 	          if (entity.type === 'player' && otherEntity.type === 'crate') {
 	            this.score++;
+	            if (this.score > 9) {
+	              this.scoreEl.className = 'double_digits';
+	            }
 	            this.crate = new _Crate2.default({
 	              pos: STAGES.STAGE_1_CRATE_SPAWN(),
 	              vel: [0, 10],
@@ -234,8 +251,8 @@
 	      var score = this.score;
 	
 	      this.scoreEl.innerHTML = this.score;
-	      this.velocityEl.innerHTML = this.player.vel[0] + ', ' + this.player.vel[1];
-	      this.positionEl.innerHTML = this.player.hitbox()[0] + ', ' + this.player.hitbox()[1];
+	      this.velocityEl.innerHTML = 'V: ' + this.player.vel[0].toFixed(0) + ', ' + this.player.vel[1].toFixed(0);
+	      this.positionEl.innerHTML = 'P: ' + this.player.hitbox()[0].toFixed(0) + ', ' + this.player.hitbox()[1].toFixed(0);
 	      ctx.clearRect(0, 0, 900, 600);
 	      renderEntity(player);
 	      renderEntity(crate);
@@ -262,9 +279,37 @@
 	    // private
 	
 	  }, {
+	    key: '_reset',
+	    value: function _reset() {
+	      this.gameOver = false;
+	      this.score = 0;
+	      this.scoreEl.className = 'single_digits';
+	
+	      this.player = new _Player2.default({
+	        type: 'player',
+	        pos: [450, 300],
+	        lastPos: [450, 300],
+	        vel: [0, 0],
+	        sprite: SPRITES.PLAYER_IDLE
+	      });
+	
+	      this.enemies = [];
+	      this.crate = new _Crate2.default({
+	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
+	        vel: [0, 10],
+	        sprite: SPRITES.CRATE
+	      });
+	      this.stage = STAGES.STAGE_1;
+	
+	      this.main();
+	    }
+	  }, {
 	    key: '_setup',
 	    value: function _setup() {
 	      var _this = this;
+	
+	      // set game state;
+	      this.gameOver = false;
 	
 	      // makes reference to canvas
 	      var canvas = document.getElementById('canvas');
@@ -299,6 +344,7 @@
 	
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
+	      this.scoreEl.className = 'single_digits';
 	      this.velocityEl = document.getElementById('velocity');
 	      this.positionEl = document.getElementById('position');
 	      this.collisionEl = document.getElementById('collision');
@@ -394,7 +440,7 @@
 	    key: '_entityHitWall',
 	    value: function _entityHitWall(entity, collisionType) {
 	      if (entity.type === 'player') {
-	        this.collisionEl.innerHTML = collisionType;
+	        this.collisionEl.innerHTML = 'C: ' + collisionType;
 	      }
 	      switch (collisionType) {
 	        case 'right':
@@ -785,14 +831,11 @@
 	      document.addEventListener('keyup', function (e) {
 	        return setKey(e, false);
 	      });
-	      window.addEventListener('blur', function () {
-	        _this.pressedKeys = {};
-	      });
+	      // window.addEventListener('blur', () => { this.pressedKeys = {}; });
 	      window.input = {
 	        isDown: function isDown(key) {
 	          return _this.pressedKeys[key.toUpperCase()];
 	        }
-	
 	      };
 	
 	      window.addEventListener("keydown", function (e) {
@@ -859,7 +902,7 @@
 	  pos: [0, 0],
 	  frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
 	  size: [64, 64],
-	  speed: 13,
+	  speed: 24,
 	  dir: 'horizontal',
 	  once: false,
 	  facing: 'right'
@@ -870,7 +913,7 @@
 	  pos: [0, 0],
 	  frames: [5, 6, 7, 8, 9, 8, 7, 6],
 	  size: [64, 64],
-	  speed: 13,
+	  speed: 18,
 	  dir: 'horizontal',
 	  once: false,
 	  facing: 'right'
@@ -881,7 +924,7 @@
 	  pos: [0, 0],
 	  frames: [6, 7, 8, 9, 8, 7, 6, 5],
 	  size: [64, 64],
-	  speed: 13,
+	  speed: 18,
 	  dir: 'horizontal',
 	  once: false,
 	  facing: 'left'
@@ -999,6 +1042,9 @@
 	new _Wall2.default({
 	  pos: [SLW1 + WT + 100, 170 - HO1],
 	  size: [MLW1, WT]
+	}), new _Wall2.default({
+	  pos: [0, -WT - 25],
+	  size: [900, WT]
 	})];
 	
 	var STAGE_1_CRATE_SPAWN = exports.STAGE_1_CRATE_SPAWN = function STAGE_1_CRATE_SPAWN() {
@@ -1065,15 +1111,21 @@
 
 /***/ },
 /* 8 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _Resources = __webpack_require__(1);
+	
+	var _Resources2 = _interopRequireDefault(_Resources);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -1085,11 +1137,16 @@
 	  }
 	
 	  _createClass(WallSprite, [{
-	    key: "render",
+	    key: 'render',
 	    value: function render(ctx) {
 	      var size = this.size;
+	      // const pattern = ctx.createPattern(
+	      //   Resources.get('./lib/img/brick.png'),
+	      //   'repeat'
+	      // );
+	      // ctx.fillStyle = pattern;
 	
-	      ctx.fillStyle = "black";
+	      ctx.fillStyle = 'black';
 	      ctx.fillRect(0, 0, size[0], size[1]);
 	      // ctx.strokeStyle = 'red';
 	      // ctx.strokeRect(0, 0, size[0], size[1]);
