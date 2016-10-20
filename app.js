@@ -393,7 +393,9 @@
 	  }, {
 	    key: '_entityHitWall',
 	    value: function _entityHitWall(entity, collisionType) {
-	      this.collisionEl.innerHTML = collisionType;
+	      if (entity.type === 'player') {
+	        this.collisionEl.innerHTML = collisionType;
+	      }
 	      switch (collisionType) {
 	        case 'right':
 	          entity.vel[0] = -entity.vel[0] * 0.25;
@@ -418,7 +420,7 @@
 	          if (entity.vel[0] === 0 && entity.vel[1] > 0) {
 	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (entity.pos[1] < entity.lastPos[1] && entity.vel[0] === 0) {
+	          if (entity.pos[1] > entity.lastPos[1] && (entity.vel[0] === 0 || entity.vel[1] > 0)) {
 	            entity.pos[1] = entity.lastPos[1];
 	            entity.vel[1] = 0;
 	          }
@@ -430,7 +432,7 @@
 	          if (entity.vel[0] === 0 && entity.vel[1] > 0) {
 	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[0] === 0) {
+	          if (entity.pos[1] > entity.lastPos[1] && (entity.vel[0] === 0 || entity.vel[1] > 0)) {
 	            entity.pos[1] = entity.lastPos[1];
 	            entity.vel[1] = 0;
 	          }
@@ -1100,10 +1102,10 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 300; // px/sec
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
 	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
-	var GRAVITY = exports.GRAVITY = 1800; // px/sec^2
+	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
 
 /***/ },
