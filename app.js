@@ -194,11 +194,16 @@
 	        var collisionType = this._collisionDetected(rect1, rect2);
 	        if (collisionType) {
 	          if (otherEntity.type === 'wall') {
-	            this._entityHitWall(collisionType);
+	            this._entityHitWall(entity, collisionType);
 	          }
 	
 	          if (entity.type === 'player' && otherEntity.type === 'crate') {
-	            console.log('I GOT A CRATE!');
+	            this.score++;
+	            this.crate = new _Crate2.default({
+	              pos: STAGES.STAGE_1_CRATE_SPAWN(),
+	              vel: [0, 10],
+	              sprite: SPRITES.CRATE
+	            });
 	          }
 	        }
 	      }
@@ -226,12 +231,12 @@
 	      var stage = this.stage;
 	      var crate = this.crate;
 	      var ctx = this.ctx;
+	      var score = this.score;
 	
+	      this.scoreEl.innerHTML = this.score;
 	      this.velocityEl.innerHTML = this.player.vel[0] + ', ' + this.player.vel[1];
 	      this.positionEl.innerHTML = this.player.hitbox()[0] + ', ' + this.player.hitbox()[1];
 	      ctx.clearRect(0, 0, 900, 600);
-	      ctx.strokeStyle = 'red';
-	      ctx.strokeRect(this.player.pos[0] + 20, this.player.pos[1] + 15, 27, 49);
 	      renderEntity(player);
 	      renderEntity(crate);
 	      renderEntities(stage);
@@ -387,76 +392,75 @@
 	    }
 	  }, {
 	    key: '_entityHitWall',
-	    value: function _entityHitWall(collisionType) {
+	    value: function _entityHitWall(entity, collisionType) {
 	      this.collisionEl.innerHTML = collisionType;
 	      switch (collisionType) {
 	        case 'right':
-	          this.player.vel[0] = -this.player.vel[0] * 0.25;
-	          this.player.pos[0] = this.player.lastPos[0];
+	          entity.vel[0] = -entity.vel[0] * 0.25;
+	          entity.pos[0] = entity.lastPos[0];
 	          break;
 	        case 'left':
-	          this.player.vel[0] = 0;
-	          this.player.pos[0] = this.player.lastPos[0];
+	          entity.vel[0] = 0;
+	          entity.pos[0] = entity.lastPos[0];
 	          break;
 	        case 'top':
-	          this.player.vel[1] = -this.player.vel[1] * 0.25;
-	          this.player.pos[1] = this.player.lastPos[1];
+	          entity.vel[1] = -entity.vel[1] * 0.25;
+	          entity.pos[1] = entity.lastPos[1];
 	          break;
 	        case 'bottom':
-	          this.player.vel[1] = 0;
-	          this.player.pos[1] = this.player.lastPos[1];
-	          this.player.jumpNumber = 0;
+	          entity.vel[1] = 0;
+	          entity.pos[1] = entity.lastPos[1];
 	          break;
 	        case 'right-bottom':
-	          if (this.player.pos[0] > this.player.lastPos[0]) {
-	            this.player.pos[0] = this.player.lastPos[0];
+	          if (entity.pos[0] > entity.lastPos[0]) {
+	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (this.player.vel[0] === 0 && this.player.vel[1] > 0) {
-	            this.player.pos[0] = this.player.lastPos[0];
+	          if (entity.vel[0] === 0 && entity.vel[1] > 0) {
+	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (this.player.pos[1] < this.player.lastPos[1] && this.player.vel[0] === 0) {
-	            this.player.pos[1] = this.player.lastPos[1];
-	            this.player.vel[1] = 0;
+	          if (entity.pos[1] < entity.lastPos[1] && entity.vel[0] === 0) {
+	            entity.pos[1] = entity.lastPos[1];
+	            entity.vel[1] = 0;
 	          }
 	          break;
 	        case 'left-bottom':
-	          if (this.player.pos[0] < this.player.lastPos[0]) {
-	            this.player.pos[0] = this.player.lastPos[0];
+	          if (entity.pos[0] < entity.lastPos[0]) {
+	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (this.player.vel[0] === 0 && this.player.vel[1] > 0) {
-	            this.player.pos[0] = this.player.lastPos[0];
+	          if (entity.vel[0] === 0 && entity.vel[1] > 0) {
+	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (this.player.pos[1] > this.player.lastPos[1] && this.player.vel[0] === 0) {
-	            this.player.pos[1] = this.player.lastPos[1];
-	            this.player.vel[1] = 0;
+	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[0] === 0) {
+	            entity.pos[1] = entity.lastPos[1];
+	            entity.vel[1] = 0;
 	          }
 	          break;
 	        case 'right-top':
-	          if (this.player.vel[0] > 0) {
-	            this.player.vel[0] = 0;
+	          if (entity.vel[0] > 0) {
+	            entity.vel[0] = 0;
 	          }
-	          if (this.player.pos[0] > this.player.lastPos[0]) {
-	            this.player.pos[0] = this.player.lastPos[0];
+	          if (entity.pos[0] > entity.lastPos[0]) {
+	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (this.player.vel[1] < 0) {
-	            this.player.pos[1] = this.player.lastPos[1];
-	            this.player.vel[1] = -this.player.vel[1] * 0.25;
+	          if (entity.vel[1] < 0) {
+	            entity.pos[1] = entity.lastPos[1];
+	            entity.vel[1] = -entity.vel[1] * 0.25;
 	          }
 	          break;
 	        case 'left-top':
-	          if (this.player.vel[0] < 0) {
-	            this.player.vel[0] = 0;
+	          if (entity.vel[0] < 0) {
+	            entity.vel[0] = 0;
 	          }
-	          if (this.player.pos[0] < this.player.lastPos[0]) {
-	            this.player.pos[0] = this.player.lastPos[0];
+	          if (entity.pos[0] < entity.lastPos[0]) {
+	            entity.pos[0] = entity.lastPos[0];
 	          }
-	          if (this.player.vel[1] < 0) {
-	            this.player.pos[1] = this.player.lastPos[1];
-	            this.player.vel[1] = -this.player.vel[1] * 0.25;
+	          if (entity.vel[1] < 0) {
+	            entity.pos[1] = entity.lastPos[1];
+	            entity.vel[1] = -entity.vel[1] * 0.25;
 	          }
 	          break;
 	        case 'top-bottom':
-	          this.player.pos[0] = this.player.lastPos[0];
+	          entity.pos[0] = entity.lastPos[0];
 	          break;
 	      }
 	    }
@@ -991,9 +995,12 @@
 	  var sample = function sample(max) {
 	    return Math.floor(Math.random() * max);
 	  };
-	  var seed = [[110, 230], [440, 330], [180, 520], [690, 520], [780, 230], [440, 100]][sample(6)];
-	  console.log(seed);
-	  return [seed[0] + sample(10), seed[1]];
+	  var seed = [[110, 230], [120, 230], [100, 230], [90, 230], [440, 330], [450, 330], [430, 330], [420, 330], [180, 520], [190, 520], [170, 520], [160, 520], [690, 520], [780, 230], [790, 230], [770, 230], [760, 230], [440, 100], [450, 100], [430, 100], [420, 100]][sample(21)];
+	  var multiplier = 1;
+	  if (Math.random() > 0.5) {
+	    multiplier = -1;
+	  }
+	  return [seed[0] + multiplier * sample(10), seed[1]];
 	};
 
 /***/ },
@@ -1050,7 +1057,7 @@
 /* 8 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -1068,14 +1075,14 @@
 	  }
 	
 	  _createClass(WallSprite, [{
-	    key: 'render',
+	    key: "render",
 	    value: function render(ctx) {
 	      var size = this.size;
-	      // ctx.fillStyle = "black";
-	      // ctx.fillRect(0, 0, size[0], size[1]);
 	
-	      ctx.strokeStyle = 'red';
-	      ctx.strokeRect(0, 0, size[0], size[1]);
+	      ctx.fillStyle = "black";
+	      ctx.fillRect(0, 0, size[0], size[1]);
+	      // ctx.strokeStyle = 'red';
+	      // ctx.strokeRect(0, 0, size[0], size[1]);
 	    }
 	  }]);
 	
@@ -1096,7 +1103,7 @@
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 300; // px/sec
 	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
-	var GRAVITY = exports.GRAVITY = 900; // px/sec^2
+	var GRAVITY = exports.GRAVITY = 1800; // px/sec^2
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
 
 /***/ },
@@ -1125,6 +1132,7 @@
 	
 	    this.type = 'crate';
 	    this.pos = pos;
+	    this.lastPos = pos;
 	    this.vel = vel;
 	    this.sprite = sprite;
 	
@@ -1143,7 +1151,10 @@
 	  }, {
 	    key: 'update',
 	    value: function update(dt) {
-	      this.vel[1] += _CONSTANTS.GRAVITY * dt;
+	      this.lastPos[1] = this.pos[1];
+	      if (this.vel[1] !== 0) {
+	        this.vel[1] += _CONSTANTS.GRAVITY * dt;
+	      }
 	      this.pos[1] += this.vel[1] * dt;
 	    }
 	  }]);
