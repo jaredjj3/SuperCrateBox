@@ -56,6 +56,10 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
+	var _Crate = __webpack_require__(10);
+	
+	var _Crate2 = _interopRequireDefault(_Crate);
+	
 	var _Sprite = __webpack_require__(3);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
@@ -128,7 +132,7 @@
 	    value: function update(dt) {
 	      this.handleInput(dt);
 	      this.updateEntities(dt);
-	      this.checkCollisions([this.player], dt);
+	      this.checkCollisions([this.player, this.crate]);
 	    }
 	  }, {
 	    key: 'handleInput',
@@ -137,15 +141,23 @@
 	
 	      if (input.isDown('UP') || input.isDown('SPACE')) {
 	        if (this._isReadyToJump()) {
-	          this.player.lastJumpTime = Date.now();
+	          this.player.isJumping = true;
 	          this.player.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
 	        }
 	      }
 	
 	      if (input.isDown('LEFT')) {
-	        this.player.vel[0] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	        if (this.player.vel[0] > -CONSTANTS.PLAYER_HORIZONTAL_VEL) {
+	          this.player.vel[0] -= CONSTANTS.PLAYER_HORIZONTAL_ACC * dt;
+	        } else {
+	          this.player.vel[0] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	        }
 	      } else if (input.isDown('RIGHT')) {
-	        this.player.vel[0] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	        if (this.player.vel[0] < CONSTANTS.PLAYER_HORIZONTAL_VEL) {
+	          this.player.vel[0] += CONSTANTS.PLAYER_HORIZONTAL_ACC * dt;
+	        } else {
+	          this.player.vel[0] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	        }
 	      } else {
 	        this.player.vel[0] = 0;
 	      }
@@ -168,11 +180,11 @@
 	    }
 	  }, {
 	    key: 'checkCollision',
-	    value: function checkCollision(entity, dt) {
+	    value: function checkCollision(entity) {
 	      var walls = this.stage;
 	      var enemies = this.enemies;
 	
-	      var collisionMap = [].concat(_toConsumableArray(walls), _toConsumableArray(enemies));
+	      var collisionMap = [].concat(_toConsumableArray(walls), _toConsumableArray(enemies), [this.crate]);
 	
 	      var rect1 = this._getRect(entity);
 	      for (var i = 0; i < collisionMap.length; i++) {
@@ -181,8 +193,12 @@
 	
 	        var collisionType = this._collisionDetected(rect1, rect2);
 	        if (collisionType) {
-	          if (entity.type === 'player' && otherEntity.type === 'wall') {
-	            this._playerHitWall(collisionType, dt);
+	          if (otherEntity.type === 'wall') {
+	            this._entityHitWall(collisionType);
+	          }
+	
+	          if (entity.type === 'player' && otherEntity.type === 'crate') {
+	            console.log('I GOT A CRATE!');
 	          }
 	        }
 	      }
@@ -190,15 +206,16 @@
 	    }
 	  }, {
 	    key: 'checkCollisions',
-	    value: function checkCollisions(list, dt) {
+	    value: function checkCollisions(list) {
 	      for (var i = 0; i < list.length; i++) {
-	        this.checkCollision(list[i], dt);
+	        this.checkCollision(list[i]);
 	      }
 	    }
 	  }, {
 	    key: 'updateEntities',
 	    value: function updateEntities(dt) {
 	      this.player.sprite.update(dt);
+	      this.crate.update(dt);
 	    }
 	  }, {
 	    key: 'render',
@@ -207,13 +224,16 @@
 	      var renderEntities = this.renderEntities;
 	      var player = this.player;
 	      var stage = this.stage;
+	      var crate = this.crate;
 	      var ctx = this.ctx;
 	
 	      this.velocityEl.innerHTML = this.player.vel[0] + ', ' + this.player.vel[1];
+	      this.positionEl.innerHTML = this.player.hitbox()[0] + ', ' + this.player.hitbox()[1];
 	      ctx.clearRect(0, 0, 900, 600);
 	      ctx.strokeStyle = 'red';
 	      ctx.strokeRect(this.player.pos[0] + 20, this.player.pos[1] + 15, 27, 49);
 	      renderEntity(player);
+	      renderEntity(crate);
 	      renderEntities(stage);
 	    }
 	  }, {
@@ -246,7 +266,7 @@
 	      this.ctx = canvas.getContext('2d');
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay.png']);
+	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png']);
 	      var init = function init() {
 	        _this.main();
 	      };
@@ -265,12 +285,17 @@
 	      });
 	
 	      this.enemies = [];
-	      this.crate = {};
+	      this.crate = new _Crate2.default({
+	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
+	        vel: [0, 10],
+	        sprite: SPRITES.CRATE
+	      });
 	      this.stage = STAGES.STAGE_1;
 	
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
 	      this.velocityEl = document.getElementById('velocity');
+	      this.positionEl = document.getElementById('position');
 	      this.collisionEl = document.getElementById('collision');
 	    }
 	  }, {
@@ -361,8 +386,8 @@
 	      return bottomSideOf1 > topSideOf2 && topSideOf1 < topSideOf2;
 	    }
 	  }, {
-	    key: '_playerHitWall',
-	    value: function _playerHitWall(collisionType, dt) {
+	    key: '_entityHitWall',
+	    value: function _entityHitWall(collisionType) {
 	      this.collisionEl.innerHTML = collisionType;
 	      switch (collisionType) {
 	        case 'right':
@@ -383,20 +408,27 @@
 	          this.player.jumpNumber = 0;
 	          break;
 	        case 'right-bottom':
-	          if (this.player.vel[0] > 0) {
-	            this.player.vel[0] = 0;
-	          }
 	          if (this.player.pos[0] > this.player.lastPos[0]) {
 	            this.player.pos[0] = this.player.lastPos[0];
 	          }
+	          if (this.player.vel[0] === 0 && this.player.vel[1] > 0) {
+	            this.player.pos[0] = this.player.lastPos[0];
+	          }
+	          if (this.player.pos[1] < this.player.lastPos[1] && this.player.vel[0] === 0) {
+	            this.player.pos[1] = this.player.lastPos[1];
+	            this.player.vel[1] = 0;
+	          }
 	          break;
 	        case 'left-bottom':
-	          this.player.jumpNumber = 0;
-	          if (this.player.vel[0] < 0) {
-	            this.player.vel[0] = 0;
-	          }
 	          if (this.player.pos[0] < this.player.lastPos[0]) {
 	            this.player.pos[0] = this.player.lastPos[0];
+	          }
+	          if (this.player.vel[0] === 0 && this.player.vel[1] > 0) {
+	            this.player.pos[0] = this.player.lastPos[0];
+	          }
+	          if (this.player.pos[1] > this.player.lastPos[1] && this.player.vel[0] === 0) {
+	            this.player.pos[1] = this.player.lastPos[1];
+	            this.player.vel[1] = 0;
 	          }
 	          break;
 	        case 'right-top':
@@ -800,7 +832,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
+	exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
 	
 	var _Sprite = __webpack_require__(3);
 	
@@ -840,6 +872,39 @@
 	  once: false,
 	  facing: 'left'
 	});
+	
+	var PLAYER_JUMP_RIGHT = exports.PLAYER_JUMP_RIGHT = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
+	  size: [64, 64],
+	  speed: 24,
+	  dir: 'horizontal',
+	  once: true,
+	  facing: 'right'
+	});
+	
+	var PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_LEFT = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
+	  size: [64, 64],
+	  speed: 24,
+	  dir: 'horizontal',
+	  once: true,
+	  facing: 'left'
+	});
+	
+	var CRATE = exports.CRATE = new _Sprite2.default({
+	  url: './lib/img/crate.png',
+	  pos: [0, 0],
+	  frames: [0],
+	  size: [20, 20],
+	  speed: 1,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
 
 /***/ },
 /* 6 */
@@ -850,7 +915,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.STAGE_1 = undefined;
+	exports.STAGE_1_CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
 	var _Wall = __webpack_require__(7);
 	
@@ -921,6 +986,15 @@
 	  pos: [SLW1 + WT + 100, 170 - HO1],
 	  size: [MLW1, WT]
 	})];
+	
+	var STAGE_1_CRATE_SPAWN = exports.STAGE_1_CRATE_SPAWN = function STAGE_1_CRATE_SPAWN() {
+	  var sample = function sample(max) {
+	    return Math.floor(Math.random() * max);
+	  };
+	  var seed = [[110, 230], [440, 330], [180, 520], [690, 520], [780, 230], [440, 100]][sample(6)];
+	  console.log(seed);
+	  return [seed[0] + sample(10), seed[1]];
+	};
 
 /***/ },
 /* 7 */
@@ -1020,9 +1094,64 @@
 	  value: true
 	});
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 300; // px/sec
+	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
 	var GRAVITY = exports.GRAVITY = 900; // px/sec^2
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _CONSTANTS = __webpack_require__(9);
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Crate = function () {
+	  function Crate(opts) {
+	    _classCallCheck(this, Crate);
+	
+	    var pos = opts.pos;
+	    var vel = opts.vel;
+	    var sprite = opts.sprite;
+	
+	    this.type = 'crate';
+	    this.pos = pos;
+	    this.vel = vel;
+	    this.sprite = sprite;
+	
+	    this.update = this.update.bind(this);
+	    this.hitbox = this.hitbox.bind(this);
+	  }
+	
+	  _createClass(Crate, [{
+	    key: 'hitbox',
+	    value: function hitbox() {
+	      var pos = this.pos;
+	      var sprite = this.sprite;
+	
+	      return [].concat(pos).concat(sprite.size);
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(dt) {
+	      this.vel[1] += _CONSTANTS.GRAVITY * dt;
+	      this.pos[1] += this.vel[1] * dt;
+	    }
+	  }]);
+	
+	  return Crate;
+	}();
+	
+	exports.default = Crate;
 
 /***/ }
 /******/ ]);
