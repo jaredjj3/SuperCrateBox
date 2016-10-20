@@ -398,7 +398,7 @@
 	      }
 	      switch (collisionType) {
 	        case 'right':
-	          entity.vel[0] = -entity.vel[0] * 0.25;
+	          entity.vel[0] = 0;
 	          entity.pos[0] = entity.lastPos[0];
 	          break;
 	        case 'left':
@@ -425,7 +425,7 @@
 	            entity.vel[1] = 0;
 	          }
 	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[1] > 0) {
-	            entity.pos[1] = entity.lastPos[1] - 3;
+	            entity.pos[1] = entity.lastPos[1] + 3;
 	            entity.vel[1] = -entity.vel[1] * 0.25;
 	          }
 	          break;
@@ -441,7 +441,7 @@
 	            entity.vel[1] = 0;
 	          }
 	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[1] < 0) {
-	            entity.pos[1] = entity.lastPos[1] - 3;
+	            entity.pos[1] = entity.lastPos[1] + 3;
 	            entity.vel[1] = -entity.vel[1] * 0.25;
 	          }
 	          break;
