@@ -8,11 +8,12 @@
 .canvas_container {
   width: 900px;
   height: 600px;
+  border-bottom: 1px solid black;
 }
 
 .single_digits {
   position: absolute;
-  font-size: 64px;
+  font-size: 72px;
   color: black;
   top: -30px;
   left: 475px;
@@ -20,8 +21,8 @@
 
 .double_digits {
   position: absolute;
-  font-size: 64px;
-  color: black;
+  font-size: 72px;
+  color: green;
   top: -30px;
   left: 462px;
 }
