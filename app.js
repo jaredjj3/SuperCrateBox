@@ -104,7 +104,6 @@
 	  _createClass(SuperCrateBox, [{
 	    key: 'play',
 	    value: function play() {
-	      console.log("play");
 	      this.lastTime = Date.now();
 	      this._setup();
 	    }
@@ -128,7 +127,7 @@
 	    value: function update(dt) {
 	      this.handleInput(dt);
 	      this.updateEntities(dt);
-	      this.checkCollisions([this.player]);
+	      this.checkCollisions([this.player], dt);
 	    }
 	  }, {
 	    key: 'handleInput',
@@ -136,11 +135,11 @@
 	      var input = window.input;
 	
 	      if (input.isDown('UP') || input.isDown('SPACE')) {
-	        this.player.vel[1] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
-	      } else if (input.isDown('DOWN')) {
-	        this.player.vel[1] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
-	      } else {
-	        this.player.vel[1] = 0;
+	        if (true) {
+	          this.player.isJumping = true;
+	          this.player.lastJumpTime = Date.now();
+	          this.player.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
+	        }
 	      }
 	
 	      if (input.isDown('LEFT')) {
@@ -161,12 +160,13 @@
 	        this.player.sprite = SPRITES.PLAYER_IDLE;
 	      }
 	
-	      this.player.pos[0] += this.player.vel[0];
-	      this.player.pos[1] += this.player.vel[1];
+	      this.player.vel[1] += CONSTANTS.GRAVITY * dt;
+	      this.player.pos[0] += this.player.vel[0] * dt;
+	      this.player.pos[1] += this.player.vel[1] * dt;
 	    }
 	  }, {
 	    key: 'checkCollision',
-	    value: function checkCollision(entity) {
+	    value: function checkCollision(entity, dt) {
 	      var walls = this.stage;
 	      var enemies = this.enemies;
 	
@@ -188,9 +188,9 @@
 	    }
 	  }, {
 	    key: 'checkCollisions',
-	    value: function checkCollisions(list) {
+	    value: function checkCollisions(list, dt) {
 	      for (var i = 0; i < list.length; i++) {
-	        this.checkCollision(list[i]);
+	        this.checkCollision(list[i], dt);
 	      }
 	    }
 	  }, {
@@ -207,6 +207,7 @@
 	      var stage = this.stage;
 	      var ctx = this.ctx;
 	
+	      this.velocityEl.innerHTML = this.player.vel[0] + ', ' + this.player.vel[1];
 	      ctx.clearRect(0, 0, 900, 600);
 	      renderEntity(player);
 	      renderEntities(stage);
@@ -264,6 +265,7 @@
 	
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
+	      this.velocityEl = document.getElementById('velocity');
 	    }
 	  }, {
 	    key: '_getRect',
@@ -287,6 +289,7 @@
 	      var b = _collisionBottom(rect1, rect2);
 	
 	      if (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y) {
+	
 	        if (l && t || l && b || r && t || r && b) {
 	          return 'both';
 	        }
@@ -341,12 +344,15 @@
 	  }, {
 	    key: '_playerHitWall',
 	    value: function _playerHitWall(collisionType) {
-	      console.log(collisionType);
 	      if (collisionType === 'horizontal') {
+	        this.player.vel[0] = 0;
 	        this.player.pos[0] -= this.player.vel[0];
 	      } else if (collisionType === 'vertical') {
+	        this.player.vel[1] = 0;
 	        this.player.pos[1] -= this.player.vel[1];
 	      } else if (collisionType === 'both') {
+	        this.player.vel[0] = 0;
+	        this.player.vel[1] = 0;
 	        this.player.pos[0] -= this.player.vel[0];
 	        this.player.pos[1] -= this.player.vel[1];
 	      }
@@ -365,7 +371,7 @@
 /* 1 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -391,7 +397,7 @@
 	  }
 	
 	  _createClass(Resources, [{
-	    key: 'load',
+	    key: "load",
 	    value: function load(arg) {
 	      var _load = this._load;
 	
@@ -400,12 +406,12 @@
 	      });
 	    }
 	  }, {
-	    key: 'get',
+	    key: "get",
 	    value: function get(url) {
 	      return this.resourceCache[url];
 	    }
 	  }, {
-	    key: 'isReady',
+	    key: "isReady",
 	    value: function isReady() {
 	      var resourceCache = this.resourceCache;
 	
@@ -418,7 +424,7 @@
 	      return ready;
 	    }
 	  }, {
-	    key: 'onReady',
+	    key: "onReady",
 	    value: function onReady(func) {
 	      this.readyCallbacks.push(func);
 	    }
@@ -426,9 +432,8 @@
 	    // private
 	
 	  }, {
-	    key: '_load',
+	    key: "_load",
 	    value: function _load(url) {
-	      console.log('_load');
 	      var resourceCache = this.resourceCache;
 	      var readyCallbacks = this.readyCallbacks;
 	      var isReady = this.isReady;
@@ -674,8 +679,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 5; // px/sec
-	var GRAVITY = exports.GRAVITY = 0.5; // px/sec^2
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 200; // px/sec
+	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -100;
+	var GRAVITY = exports.GRAVITY = 100; // px/sec^2
 
 /***/ },
 /* 6 */,
@@ -886,6 +892,7 @@
 	    this.vel = vel;
 	    this.sprite = sprite;
 	    this.isJumping = false;
+	    this.lastJumpTime = null;
 	
 	    this.hitbox = this.hitbox.bind(this);
 	  }
