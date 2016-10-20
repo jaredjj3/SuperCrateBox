@@ -179,6 +179,7 @@
 	
 	        if (this._collisionDetected(rect1, rect2)) {
 	          if (entity.type === 'player' && otherEntity.type === 'wall') {
+	            console.log('e: ' + entity.pos + ', o: ' + otherEntity.pos);
 	            this._playerHitWall();
 	          }
 	        }
@@ -275,12 +276,34 @@
 	  }, {
 	    key: '_collisionDetected',
 	    value: function _collisionDetected(rect1, rect2) {
+	
 	      if (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y) {
-	        return true;
+	        if (rect1.x > rect2.x && rect1.x + rect1.width < rect2.x + rect2.width && rect1.y + rect1.height < rect2.y + rect2.height || rect2.x + rect2.width > rect1.x + rect1.width && rect1.x > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y + rect2.height) {
+	          // vertical collision
+	          console.log('vertical');
+	        } else if (rect1.y < rect2.y && rect1.y + rect1.height > rect2.y + rect2.height && rect1.x + rect1.width < rect2.x + rect2.width || rect2.x + rect2.width > rect1.x && rect1.x + rect1.width > rect2.x + rect2.width && rect1.y < rect2.y && rect1.y + rect1.width < rect2.y + rect2.width) {
+	          // horizontal collision
+	          console.log('horizontal');
+	        } else {
+	          // vertical and horizontal collision
+	          console.log('both');
+	        }
 	      } else {
 	        return false;
 	      }
 	    }
+	  }, {
+	    key: '_collisionRight',
+	    value: function _collisionRight(rect1, rect2) {}
+	  }, {
+	    key: '_collisionLeft',
+	    value: function _collisionLeft(rect1, rect2) {}
+	  }, {
+	    key: '_collisionTop',
+	    value: function _collisionTop(rect1, rect2) {}
+	  }, {
+	    key: '_collisionBottom',
+	    value: function _collisionBottom(rect1, rect2) {}
 	  }, {
 	    key: '_playerHitWall',
 	    value: function _playerHitWall() {
@@ -610,7 +633,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 3; // px/sec
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 5; // px/sec
 	var GRAVITY = exports.GRAVITY = 0.5; // px/sec^2
 
 /***/ },
