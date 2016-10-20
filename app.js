@@ -408,9 +408,9 @@
 	          if (this.player.pos[0] > this.player.lastPos[0]) {
 	            this.player.pos[0] = this.player.lastPos[0];
 	          }
-	          this.player.vel[1] += CONSTANTS.GRAVITY * dt;
-	          if (this.player.pos[1] < this.player.lastPos[1]) {
+	          if (this.player.vel[1] < 0) {
 	            this.player.pos[1] = this.player.lastPos[1];
+	            this.player.vel[1] = -this.player.vel[1] * 0.25;
 	          }
 	          break;
 	        case 'left-top':
@@ -420,16 +420,13 @@
 	          if (this.player.pos[0] < this.player.lastPos[0]) {
 	            this.player.pos[0] = this.player.lastPos[0];
 	          }
-	          this.player.vel[1] += CONSTANTS.GRAVITY * dt;
-	          if (this.player.pos[1] < this.player.lastPos[1]) {
+	          if (this.player.vel[1] < 0) {
 	            this.player.pos[1] = this.player.lastPos[1];
+	            this.player.vel[1] = -this.player.vel[1] * 0.25;
 	          }
 	          break;
 	        case 'top-bottom':
 	          this.player.pos[0] = this.player.lastPos[0];
-	          if (this.player.vel[1] < 0) {
-	            this.player.vel[1] = 0;
-	          }
 	          break;
 	      }
 	    }
