@@ -269,6 +269,7 @@
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
 	      this.velocityEl = document.getElementById('velocity');
+	      this.collisionEl = document.getElementById('collision');
 	    }
 	  }, {
 	    key: '_getRect',
@@ -348,8 +349,8 @@
 	  }, {
 	    key: '_playerHitWall',
 	    value: function _playerHitWall(collisionType) {
-	      console.log(collisionType);
-	      if (collisionType === 'horizontal') {
+	      this.collisionEl.innerHTML = collisionType;
+	      if (collisionType === 'right' || collisionType === 'left') {
 	        this.player.vel[0] = 0;
 	        this.player.pos[0] = this.player.lastPos[0];
 	      } else if (collisionType === 'top' || collisionType === 'bottom') {
