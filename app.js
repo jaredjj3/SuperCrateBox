@@ -127,8 +127,8 @@
 	    key: 'update',
 	    value: function update(dt) {
 	      this.handleInput(dt);
-	      this.checkCollisions([this.player]);
 	      this.updateEntities(dt);
+	      this.checkCollisions([this.player]);
 	    }
 	  }, {
 	    key: 'handleInput',
@@ -177,10 +177,10 @@
 	        var otherEntity = collisionMap[i];
 	        var rect2 = this._getRect(otherEntity);
 	
-	        if (this._collisionDetected(rect1, rect2)) {
+	        var collisionType = this._collisionDetected(rect1, rect2);
+	        if (collisionType) {
 	          if (entity.type === 'player' && otherEntity.type === 'wall') {
-	            console.log('e: ' + entity.pos + ', o: ' + otherEntity.pos);
-	            this._playerHitWall();
+	            this._playerHitWall(collisionType);
 	          }
 	        }
 	      }
@@ -276,39 +276,80 @@
 	  }, {
 	    key: '_collisionDetected',
 	    value: function _collisionDetected(rect1, rect2) {
+	      var _collisionRight = this._collisionRight;
+	      var _collisionLeft = this._collisionLeft;
+	      var _collisionTop = this._collisionTop;
+	      var _collisionBottom = this._collisionBottom;
+	
+	      var l = _collisionLeft(rect1, rect2);
+	      var r = _collisionRight(rect1, rect2);
+	      var t = _collisionTop(rect1, rect2);
+	      var b = _collisionBottom(rect1, rect2);
 	
 	      if (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y) {
-	        if (rect1.x > rect2.x && rect1.x + rect1.width < rect2.x + rect2.width && rect1.y + rect1.height < rect2.y + rect2.height || rect2.x + rect2.width > rect1.x + rect1.width && rect1.x > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y + rect2.height) {
-	          // vertical collision
-	          console.log('vertical');
-	        } else if (rect1.y < rect2.y && rect1.y + rect1.height > rect2.y + rect2.height && rect1.x + rect1.width < rect2.x + rect2.width || rect2.x + rect2.width > rect1.x && rect1.x + rect1.width > rect2.x + rect2.width && rect1.y < rect2.y && rect1.y + rect1.width < rect2.y + rect2.width) {
-	          // horizontal collision
-	          console.log('horizontal');
-	        } else {
-	          // vertical and horizontal collision
-	          console.log('both');
+	        if (l && t || l && b || r && t || r && b) {
+	          return 'both';
+	        }
+	
+	        if (l || r) {
+	          return 'horizontal';
+	        }
+	
+	        if (t || b) {
+	          return 'vertical';
 	        }
 	      } else {
-	        return false;
+	        return null;
 	      }
 	    }
 	  }, {
 	    key: '_collisionRight',
-	    value: function _collisionRight(rect1, rect2) {}
+	    value: function _collisionRight(rect1, rect2) {
+	      var leftSideOf1 = rect1.x;
+	      var rightSideOf1 = rect1.x + rect1.width;
+	      var leftSideOf2 = rect2.x;
+	      var rightSideOf2 = rect2.x + rect2.width;
+	      return rightSideOf1 > leftSideOf2 && leftSideOf1 < leftSideOf2;
+	    }
 	  }, {
 	    key: '_collisionLeft',
-	    value: function _collisionLeft(rect1, rect2) {}
+	    value: function _collisionLeft(rect1, rect2) {
+	      var leftSideOf1 = rect1.x;
+	      var rightSideOf1 = rect1.x + rect1.width;
+	      var leftSideOf2 = rect2.x;
+	      var rightSideOf2 = rect2.x + rect2.width;
+	      return leftSideOf1 < rightSideOf2 && rightSideOf1 > rightSideOf2;
+	    }
 	  }, {
 	    key: '_collisionTop',
-	    value: function _collisionTop(rect1, rect2) {}
+	    value: function _collisionTop(rect1, rect2) {
+	      var topSideOf1 = rect1.y;
+	      var bottomSideOf1 = rect1.y + rect1.height;
+	      var topSideOf2 = rect2.y;
+	      var bottomSideOf2 = rect2.y + rect2.height;
+	      return topSideOf1 < bottomSideOf2 && bottomSideOf1 > bottomSideOf2;
+	    }
 	  }, {
 	    key: '_collisionBottom',
-	    value: function _collisionBottom(rect1, rect2) {}
+	    value: function _collisionBottom(rect1, rect2) {
+	      var topSideOf1 = rect1.y;
+	      var bottomSideOf1 = rect1.y + rect1.height;
+	      var topSideOf2 = rect2.y;
+	      var bottomSideOf2 = rect2.y + rect2.height;
+	      return bottomSideOf1 > topSideOf2 && topSideOf1 < topSideOf2;
+	    }
 	  }, {
 	    key: '_playerHitWall',
-	    value: function _playerHitWall() {
-	      this.player.pos[0] -= this.player.vel[0];
-	      this.player.pos[1] -= this.player.vel[1];
+	    value: function _playerHitWall(collisionType) {
+	      console.log(collisionType);
+	      if (collisionType === 'horizontal') {
+	        this.player.pos[0] -= this.player.vel[0];
+	      } else if (collisionType === 'vertical') {
+	        this.player.pos[1] -= this.player.vel[1];
+	      } else if (collisionType === 'both') {
+	        this.player.pos[0] -= this.player.vel[0];
+	        this.player.pos[1] -= this.player.vel[1];
+	      }
 	    }
 	  }]);
 	
