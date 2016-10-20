@@ -246,7 +246,7 @@
 	      this.ctx = canvas.getContext('2d');
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay_idle.png', './lib/img/jay_running.png']);
+	      _Resources2.default.load(['./lib/img/jay.png']);
 	      var init = function init() {
 	        _this.main();
 	      };
@@ -397,8 +397,6 @@
 	          }
 	          if (this.player.pos[0] < this.player.lastPos[0]) {
 	            this.player.pos[0] = this.player.lastPos[0];
-	          } else {
-	            this.player.vel[1] = 0;
 	          }
 	          break;
 	        case 'right-top':
@@ -811,7 +809,7 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var PLAYER_IDLE = exports.PLAYER_IDLE = new _Sprite2.default({
-	  url: './lib/img/jay_idle.png',
+	  url: './lib/img/jay.png',
 	  pos: [0, 0],
 	  frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
 	  size: [64, 64],
@@ -822,7 +820,7 @@
 	});
 	
 	var PLAYER_RUN_RIGHT = exports.PLAYER_RUN_RIGHT = new _Sprite2.default({
-	  url: './lib/img/jay_running.png',
+	  url: './lib/img/jay.png',
 	  pos: [0, 0],
 	  frames: [5, 6, 7, 8, 9, 8, 7, 6],
 	  size: [64, 64],
@@ -833,7 +831,7 @@
 	});
 	
 	var PLAYER_RUN_LEFT = exports.PLAYER_RUN_LEFT = new _Sprite2.default({
-	  url: './lib/img/jay_running.png',
+	  url: './lib/img/jay.png',
 	  pos: [0, 0],
 	  frames: [6, 7, 8, 9, 8, 7, 6, 5],
 	  size: [64, 64],
