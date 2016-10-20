@@ -160,6 +160,8 @@
 	        this.player.sprite = SPRITES.PLAYER_IDLE;
 	      }
 	
+	      this.player.lastPos[0] = this.player.pos[0];
+	      this.player.lastPos[1] = this.player.pos[1];
 	      this.player.vel[1] += CONSTANTS.GRAVITY * dt;
 	      this.player.pos[0] += this.player.vel[0] * dt;
 	      this.player.pos[1] += this.player.vel[1] * dt;
@@ -255,6 +257,7 @@
 	      this.player = new _Player2.default({
 	        type: 'player',
 	        pos: [450, 300],
+	        lastPos: [450, 300],
 	        vel: [0, 0],
 	        sprite: SPRITES.PLAYER_IDLE
 	      });
@@ -293,13 +296,14 @@
 	        if (l && t || l && b || r && t || r && b) {
 	          return 'both';
 	        }
-	
-	        if (l || r) {
-	          return 'horizontal';
-	        }
-	
-	        if (t || b) {
-	          return 'vertical';
+	        if (l) {
+	          return 'left';
+	        } else if (r) {
+	          return 'right';
+	        } else if (t) {
+	          return 'top';
+	        } else if (b) {
+	          return 'bottom';
 	        }
 	      } else {
 	        return null;
@@ -344,17 +348,18 @@
 	  }, {
 	    key: '_playerHitWall',
 	    value: function _playerHitWall(collisionType) {
+	      console.log(collisionType);
 	      if (collisionType === 'horizontal') {
 	        this.player.vel[0] = 0;
-	        this.player.pos[0] -= this.player.vel[0];
-	      } else if (collisionType === 'vertical') {
+	        this.player.pos[0] = this.player.lastPos[0];
+	      } else if (collisionType === 'top' || collisionType === 'bottom') {
 	        this.player.vel[1] = 0;
-	        this.player.pos[1] -= this.player.vel[1];
+	        this.player.pos[1] = this.player.lastPos[1];
 	      } else if (collisionType === 'both') {
 	        this.player.vel[0] = 0;
 	        this.player.vel[1] = 0;
-	        this.player.pos[0] -= this.player.vel[0];
-	        this.player.pos[1] -= this.player.vel[1];
+	        this.player.pos[0] = this.player.lastPos[0];
+	        this.player.pos[1] = this.player.lastPos[1];
 	      }
 	    }
 	  }]);
@@ -886,9 +891,11 @@
 	    var pos = opts.pos;
 	    var vel = opts.vel;
 	    var sprite = opts.sprite;
+	    var lastPos = opts.lastPos;
 	
 	    this.type = 'player';
 	    this.pos = pos;
+	    this.lastPos = lastPos;
 	    this.vel = vel;
 	    this.sprite = sprite;
 	    this.isJumping = false;
