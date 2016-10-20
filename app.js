@@ -95,6 +95,7 @@
 	    this._getRect = this._getRect.bind(this);
 	    this.handleInput = this.handleInput.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
+	    this._isReadyToJump = this._isReadyToJump.bind(this);
 	    this.updateEntities = this.updateEntities.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
 	    this.checkCollision = this.checkCollision.bind(this);
@@ -135,8 +136,7 @@
 	      var input = window.input;
 	
 	      if (input.isDown('UP') || input.isDown('SPACE')) {
-	        if (true) {
-	          this.player.isJumping = true;
+	        if (this._isReadyToJump()) {
 	          this.player.lastJumpTime = Date.now();
 	          this.player.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
 	        }
@@ -182,7 +182,7 @@
 	        var collisionType = this._collisionDetected(rect1, rect2);
 	        if (collisionType) {
 	          if (entity.type === 'player' && otherEntity.type === 'wall') {
-	            this._playerHitWall(collisionType);
+	            this._playerHitWall(collisionType, dt);
 	          }
 	        }
 	      }
@@ -280,6 +280,19 @@
 	      };
 	    }
 	  }, {
+	    key: '_isReadyToJump',
+	    value: function _isReadyToJump() {
+	      var jumpTiming = void 0;
+	      var jumpNumber = this.player.jumpNumber;
+	      console.log(jumpNumber);
+	      if (jumpNumber < 2) {
+	        jumpTiming = CONSTANTS.JUMP_TIME;
+	      } else {
+	        jumpTiming = Date.now() - this.player.lastJumpTime;
+	      }
+	      return jumpTiming >= CONSTANTS.JUMP_TIME && jumpNumber < 2;
+	    }
+	  }, {
 	    key: '_collisionDetected',
 	    value: function _collisionDetected(rect1, rect2) {
 	      var _collisionRight = this._collisionRight;
@@ -287,17 +300,23 @@
 	      var _collisionTop = this._collisionTop;
 	      var _collisionBottom = this._collisionBottom;
 	
-	      var l = _collisionLeft(rect1, rect2);
-	      var r = _collisionRight(rect1, rect2);
-	      var t = _collisionTop(rect1, rect2);
-	      var b = _collisionBottom(rect1, rect2);
 	
 	      if (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y) {
 	
-	        if (l && t || l && b || r && t || r && b) {
-	          return 'both';
-	        }
-	        if (l) {
+	        var l = _collisionLeft(rect1, rect2);
+	        var r = _collisionRight(rect1, rect2);
+	        var t = _collisionTop(rect1, rect2);
+	        var b = _collisionBottom(rect1, rect2);
+	
+	        if (l && t) {
+	          return 'left-top';
+	        } else if (l && b) {
+	          return 'left-bottom';
+	        } else if (r && t) {
+	          return 'right-top';
+	        } else if (r && b) {
+	          return 'right-bottom';
+	        } else if (l) {
 	          return 'left';
 	        } else if (r) {
 	          return 'right';
@@ -348,19 +367,46 @@
 	    }
 	  }, {
 	    key: '_playerHitWall',
-	    value: function _playerHitWall(collisionType) {
+	    value: function _playerHitWall(collisionType, dt) {
 	      this.collisionEl.innerHTML = collisionType;
-	      if (collisionType === 'right' || collisionType === 'left') {
-	        this.player.vel[0] = 0;
-	        this.player.pos[0] = this.player.lastPos[0];
-	      } else if (collisionType === 'top' || collisionType === 'bottom') {
-	        this.player.vel[1] = 0;
-	        this.player.pos[1] = this.player.lastPos[1];
-	      } else if (collisionType === 'both') {
-	        this.player.vel[0] = 0;
-	        this.player.vel[1] = 0;
-	        this.player.pos[0] = this.player.lastPos[0];
-	        this.player.pos[1] = this.player.lastPos[1];
+	
+	      switch (collisionType) {
+	        case 'right':
+	          this.player.vel[0] = 0;
+	          this.player.vel[1] = 0;
+	          this.player.pos[0] = this.player.lastPos[0];
+	          this.player.pos[1] = this.player.lastPos[1];
+	          break;
+	        case 'left':
+	          this.player.vel[0] = 0;
+	          this.player.vel[1] = 0;
+	          this.player.pos[0] = this.player.lastPos[0];
+	          this.player.pos[1] = this.player.lastPos[1];
+	          break;
+	        case 'top':
+	          this.player.pos[1] = this.player.lastPos[1];
+	          break;
+	        case 'bottom':
+	          this.player.vel[1] = 0;
+	          this.player.pos[1] = this.player.lastPos[1];
+	          this.player.jumpNumber = 0;
+	          break;
+	        case 'right-bottom':
+	          this.player.vel[1] = 0;
+	          this.player.pos[1] = this.player.lastPos[1];
+	          this.player.jumpNumber = 0;
+	          break;
+	        case 'left-bottom':
+	          this.player.vel[1] = 0;
+	          this.player.pos[1] = this.player.lastPos[1];
+	          this.player.jumpNumber = 0;
+	          break;
+	        case 'right-top':
+	          this.player.pos[1] = this.player.lastPos[1];
+	          break;
+	        case 'left-top':
+	          this.player.pos[1] = this.player.lastPos[1];
+	          break;
 	      }
 	    }
 	  }]);
@@ -631,6 +677,7 @@
 	        isDown: function isDown(key) {
 	          return _this.pressedKeys[key.toUpperCase()];
 	        }
+	
 	      };
 	
 	      window.addEventListener("keydown", function (e) {
@@ -685,9 +732,10 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 200; // px/sec
-	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -100;
-	var GRAVITY = exports.GRAVITY = 100; // px/sec^2
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 300; // px/sec
+	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
+	var GRAVITY = exports.GRAVITY = 900; // px/sec^2
+	var JUMP_TIME = exports.JUMP_TIME = 800; //millisec
 
 /***/ },
 /* 6 */,
@@ -900,7 +948,8 @@
 	    this.vel = vel;
 	    this.sprite = sprite;
 	    this.isJumping = false;
-	    this.lastJumpTime = null;
+	    this.jumpNumber = 0;
+	    this.lastJumpTime = Date.now();
 	
 	    this.hitbox = this.hitbox.bind(this);
 	  }
