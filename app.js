@@ -56,27 +56,27 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
-	var _Crate = __webpack_require__(3);
+	var _Crate = __webpack_require__(7);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
-	var _Sprite = __webpack_require__(5);
+	var _Sprite = __webpack_require__(6);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
-	var _Input = __webpack_require__(6);
+	var _Input = __webpack_require__(8);
 	
 	var _Input2 = _interopRequireDefault(_Input);
 	
-	var _ENEMIES = __webpack_require__(7);
+	var _Enemy = __webpack_require__(10);
 	
-	var ENEMIES = _interopRequireWildcard(_ENEMIES);
+	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
-	var _SPRITES = __webpack_require__(9);
+	var _SPRITES = __webpack_require__(5);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(10);
+	var _STAGES = __webpack_require__(11);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -84,7 +84,7 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _CollisionManager = __webpack_require__(13);
+	var _CollisionManager = __webpack_require__(14);
 	
 	var _CollisionManager2 = _interopRequireDefault(_CollisionManager);
 	
@@ -104,6 +104,7 @@
 	    this.render = this.render.bind(this);
 	    this.setup = this.setup.bind(this);
 	    this.reset = this.reset.bind(this);
+	    this.resetCrate = this.resetCrate.bind(this);
 	    this.renderHtml = this.renderHtml.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
@@ -180,6 +181,21 @@
 	    // private
 	
 	  }, {
+	    key: 'resetCrate',
+	    value: function resetCrate() {
+	      var _this = this;
+	
+	      this.crate.pos[0] = -100;
+	      this.crate.pos[1] = 100;
+	      setTimeout(function () {
+	        _this.crate = new _Crate2.default({
+	          pos: STAGES.STAGE_1_CRATE_SPAWN(),
+	          vel: [0, 10],
+	          sprite: SPRITES.CRATE
+	        });
+	      }, 500);
+	    }
+	  }, {
 	    key: 'reset',
 	    value: function reset() {
 	      this.gameOver = false;
@@ -194,7 +210,16 @@
 	        sprite: SPRITES.PLAYER_IDLE
 	      });
 	
-	      this.enemies = [];
+	      this.enemies = [new _Enemy2.default({
+	        pos: [400, 0],
+	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	        sprite: SPRITES.HAMMER_RUN_RIGHT
+	      }), new _Enemy2.default({
+	        pos: [400, 0],
+	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	        sprite: SPRITES.HAMMER_RUN_RIGHT
+	      })];
+	
 	      this.crate = new _Crate2.default({
 	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
 	        vel: [0, 10],
@@ -207,14 +232,14 @@
 	  }, {
 	    key: 'setup',
 	    value: function setup() {
-	      var _this = this;
+	      var _this2 = this;
 	
 	      this.gameOver = false;
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png']);
+	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png']);
 	      var init = function init() {
-	        _this.main();
+	        _this2.main();
 	      };
 	      _Resources2.default.onReady(init);
 	      _Input2.default.setup();
@@ -227,7 +252,7 @@
 	      this.scoreEl.className = 'single_digits';
 	      this.velocityEl = document.getElementById('velocity');
 	      this.positionEl = document.getElementById('position');
-	      this.collisionManager = new _CollisionManager2.default();
+	      this.collisionManager = new _CollisionManager2.default(this);
 	
 	      this.player = new _Player2.default({
 	        pos: [450, 300],
@@ -235,7 +260,15 @@
 	        sprite: SPRITES.PLAYER_IDLE
 	      });
 	
-	      this.enemies = [];
+	      this.enemies = [new _Enemy2.default({
+	        pos: [400, 0],
+	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	        sprite: SPRITES.HAMMER_RUN_RIGHT
+	      }), new _Enemy2.default({
+	        pos: [400, 0],
+	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	        sprite: SPRITES.HAMMER_RUN_RIGHT
+	      })];
 	
 	      this.crate = new _Crate2.default({
 	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
@@ -263,7 +296,13 @@
 	  }, {
 	    key: 'renderHtml',
 	    value: function renderHtml() {
-	      this.scoreEl.innerHTML = this.score;
+	      var score = this.score;
+	      var player = this.player;
+	
+	      this.scoreEl.innerHTML = score;
+	      if (this.score > 9) {
+	        this.scoreEl.className = "double_digits";
+	      }
 	      var vx = this.player.vel[0].toFixed(0);
 	      var vy = this.player.vel[1].toFixed(0);
 	      var x = this.player.hitbox().x.toFixed(0);
@@ -429,7 +468,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Moveable2 = __webpack_require__(15);
+	var _Moveable2 = __webpack_require__(3);
 	
 	var _Moveable3 = _interopRequireDefault(_Moveable2);
 	
@@ -437,7 +476,7 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _SPRITES = __webpack_require__(9);
+	var _SPRITES = __webpack_require__(5);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
@@ -538,45 +577,53 @@
 	  value: true
 	});
 	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
 	var _CONSTANTS = __webpack_require__(4);
 	
-	var _Moveable2 = __webpack_require__(15);
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _Moveable3 = _interopRequireDefault(_Moveable2);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	var Moveable = function () {
+	  function Moveable(opts) {
+	    _classCallCheck(this, Moveable);
 	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	    var pos = opts.pos;
+	    var lastPos = opts.lastPos;
+	    var vel = opts.vel;
+	    var lastVel = opts.lastVel;
+	    var sprite = opts.sprite;
 	
-	var Crate = function (_Moveable) {
-	  _inherits(Crate, _Moveable);
+	    this.pos = pos;
+	    this.lastPos = [0, 0];
+	    this.vel = vel;
+	    this.lastVel = [0, 0];
+	    this.sprite = sprite;
 	
-	  function Crate(opts) {
-	    _classCallCheck(this, Crate);
-	
-	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
-	
-	    _this.type = 'crate';
-	
-	    _this.hitbox = function () {
-	      return {
-	        x: _this.pos[0],
-	        y: _this.pos[1],
-	        w: _this.sprite.size[0],
-	        h: _this.sprite.size[1]
-	      };
-	    };
-	    return _this;
+	    this.update = this.update.bind(this);
 	  }
 	
-	  return Crate;
-	}(_Moveable3.default);
+	  _createClass(Moveable, [{
+	    key: 'update',
+	    value: function update(dt) {
+	      this.lastPos[0] = this.pos[0];
+	      this.lastPos[1] = this.pos[1];
+	      this.lastVel[0] = this.vel[0];
+	      this.lastVel[1] = this.vel[1];
+	      this.vel[1] += CONSTANTS.GRAVITY * dt;
+	      this.pos[0] += this.vel[0] * dt;
+	      this.pos[1] += this.vel[1] * dt;
+	      this.sprite.update(dt);
+	    }
+	  }]);
 	
-	exports.default = Crate;
+	  return Moveable;
+	}();
+	
+	exports.default = Moveable;
 
 /***/ },
 /* 4 */
@@ -592,11 +639,116 @@
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
 	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
-	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 300;
-	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -300;
+	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 200;
+	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -350;
 
 /***/ },
 /* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
+	
+	var _Sprite = __webpack_require__(6);
+	
+	var _Sprite2 = _interopRequireDefault(_Sprite);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var PLAYER_IDLE = exports.PLAYER_IDLE = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+	  size: [64, 64],
+	  speed: 24,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
+	
+	var PLAYER_RUN_RIGHT = exports.PLAYER_RUN_RIGHT = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [5, 6, 7, 8, 9, 8, 7, 6],
+	  size: [64, 64],
+	  speed: 18,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
+	
+	var PLAYER_RUN_LEFT = exports.PLAYER_RUN_LEFT = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [6, 7, 8, 9, 8, 7, 6, 5],
+	  size: [64, 64],
+	  speed: 18,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'left'
+	});
+	
+	var PLAYER_JUMP_RIGHT = exports.PLAYER_JUMP_RIGHT = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
+	  size: [64, 64],
+	  speed: 24,
+	  dir: 'horizontal',
+	  once: true,
+	  facing: 'right'
+	});
+	
+	var PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_LEFT = new _Sprite2.default({
+	  url: './lib/img/jay.png',
+	  pos: [0, 0],
+	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
+	  size: [64, 64],
+	  speed: 24,
+	  dir: 'horizontal',
+	  once: true,
+	  facing: 'left'
+	});
+	
+	var CRATE = exports.CRATE = new _Sprite2.default({
+	  url: './lib/img/crate.png',
+	  pos: [0, 0],
+	  frames: [0],
+	  size: [20, 20],
+	  speed: 1,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
+	
+	var HAMMER_RUN_RIGHT = exports.HAMMER_RUN_RIGHT = new _Sprite2.default({
+	  url: './lib/img/hammer.png',
+	  pos: [0, 0],
+	  frames: [0, 1, 2, 3, 4, 3, 2, 1],
+	  size: [64, 64],
+	  speed: 13,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'right'
+	});
+	
+	var HAMMER_RUN_LEFT = exports.HAMMER_RUN_LEFT = new _Sprite2.default({
+	  url: './lib/img/hammer.png',
+	  pos: [0, 0],
+	  frames: [0, 1, 2, 3, 4, 3, 2, 1],
+	  size: [64, 64],
+	  speed: 13,
+	  dir: 'horizontal',
+	  once: false,
+	  facing: 'left'
+	});
+
+/***/ },
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -702,7 +854,57 @@
 	exports.default = Sprite;
 
 /***/ },
-/* 6 */
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var _Moveable2 = __webpack_require__(3);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Crate = function (_Moveable) {
+	  _inherits(Crate, _Moveable);
+	
+	  function Crate(opts) {
+	    _classCallCheck(this, Crate);
+	
+	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
+	
+	    _this.type = 'crate';
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0],
+	        y: _this.pos[1],
+	        w: _this.sprite.size[0],
+	        h: _this.sprite.size[1]
+	      };
+	    };
+	    return _this;
+	  }
+	
+	  return Crate;
+	}(_Moveable3.default);
+	
+	exports.default = Crate;
+
+/***/ },
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -787,51 +989,8 @@
 	exports.default = new Input();
 
 /***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.ENEMY_1 = undefined;
-	
-	var _Enemy = __webpack_require__(8);
-	
-	var _Enemy2 = _interopRequireDefault(_Enemy);
-	
-	var _CONSTANTS = __webpack_require__(4);
-	
-	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
-	
-	var _SPRITES = __webpack_require__(9);
-	
-	var SPRITES = _interopRequireWildcard(_SPRITES);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	var multiplier = function multiplier() {
-	  if (Math.random() > 0.5) {
-	    return -1;
-	  }
-	  return 1;
-	};
-	
-	var ENEMY_1 = exports.ENEMY_1 = function ENEMY_1() {
-	  return new _Enemy2.default({
-	    type: 'enemy',
-	    pos: [400, 0],
-	    lastPos: [450, 0],
-	    vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	    sprite: SPRITES.PLAYER_IDLE
-	  });
-	};
-
-/***/ },
-/* 8 */
+/* 9 */,
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -842,7 +1001,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Moveable2 = __webpack_require__(15);
+	var _Moveable2 = __webpack_require__(3);
 	
 	var _Moveable3 = _interopRequireDefault(_Moveable2);
 	
@@ -868,6 +1027,8 @@
 	
 	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
 	
+	    _this.type = 'enemy';
+	    _this.speed = CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
 	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
 	
 	    _this.hitbox = function () {
@@ -897,12 +1058,21 @@
 	    key: 'update',
 	    value: function update(dt) {
 	      if (this.direction === 'left') {
-	        this.vel[0] = -CONSTANTS.ENEMY_ONE_VEL;
+	        this.vel[0] = -this.speed;
 	      } else if (this.direction === 'right') {
-	        this.vel[0] = CONSTANTS.ENEMY_ONE_VEL;
+	        this.vel[0] = this.speed;
 	      }
-	      this.lastPos = this.pos;
-	      this.lastVel = this.vel;
+	      if (this.pos[0] > 900 || this.pos[1] > 600) {
+	        this.pos[0] = 400;
+	        this.pos[1] = 0;
+	      }
+	
+	      this.lastPos[0] = this.pos[0];
+	      this.lastPos[1] = this.pos[1];
+	      this.lastVel[0] = this.vel[0];
+	      this.lastVel[1] = this.vel[1];
+	
+	      this.vel[1] += Math.random() > 0.99 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
 	      this.vel[1] += CONSTANTS.GRAVITY * dt;
 	      this.pos[0] += this.vel[0] * dt;
 	      this.pos[1] += this.vel[1] * dt;
@@ -916,90 +1086,7 @@
 	exports.default = Enemy;
 
 /***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
-	
-	var _Sprite = __webpack_require__(5);
-	
-	var _Sprite2 = _interopRequireDefault(_Sprite);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	var PLAYER_IDLE = exports.PLAYER_IDLE = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-	  size: [64, 64],
-	  speed: 24,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
-	
-	var PLAYER_RUN_RIGHT = exports.PLAYER_RUN_RIGHT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [5, 6, 7, 8, 9, 8, 7, 6],
-	  size: [64, 64],
-	  speed: 18,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
-	
-	var PLAYER_RUN_LEFT = exports.PLAYER_RUN_LEFT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [6, 7, 8, 9, 8, 7, 6, 5],
-	  size: [64, 64],
-	  speed: 18,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'left'
-	});
-	
-	var PLAYER_JUMP_RIGHT = exports.PLAYER_JUMP_RIGHT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
-	  size: [64, 64],
-	  speed: 24,
-	  dir: 'horizontal',
-	  once: true,
-	  facing: 'right'
-	});
-	
-	var PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_LEFT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
-	  size: [64, 64],
-	  speed: 24,
-	  dir: 'horizontal',
-	  once: true,
-	  facing: 'left'
-	});
-	
-	var CRATE = exports.CRATE = new _Sprite2.default({
-	  url: './lib/img/crate.png',
-	  pos: [0, 0],
-	  frames: [0],
-	  size: [20, 20],
-	  speed: 1,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
-
-/***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1009,7 +1096,7 @@
 	});
 	exports.STAGE_1_CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
-	var _Wall = __webpack_require__(11);
+	var _Wall = __webpack_require__(12);
 	
 	var _Wall2 = _interopRequireDefault(_Wall);
 	
@@ -1095,7 +1182,7 @@
 	};
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1104,7 +1191,7 @@
 	  value: true
 	});
 	
-	var _WallSprite = __webpack_require__(12);
+	var _WallSprite = __webpack_require__(13);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
@@ -1138,7 +1225,7 @@
 	exports.default = Wall;
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1187,7 +1274,7 @@
 	exports.default = WallSprite;
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1198,7 +1285,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Crate = __webpack_require__(3);
+	var _Crate = __webpack_require__(7);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -1209,9 +1296,10 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var CollisionManager = function () {
-	  function CollisionManager() {
+	  function CollisionManager(game) {
 	    _classCallCheck(this, CollisionManager);
 	
+	    this.game = game;
 	    this.collisionEl = document.getElementById('collision');
 	    this.entityHitWall = this.entityHitWall.bind(this);
 	    this.typeOfCollision = this.typeOfCollision.bind(this);
@@ -1241,23 +1329,64 @@
 	  }, {
 	    key: 'handlePlayerCollisions',
 	    value: function handlePlayerCollisions(player, otherObjects) {
+	      var game = this.game;
 	      var typeOfCollision = this.typeOfCollision;
 	      var entityHitWall = this.entityHitWall;
+	      var playerPickedUpCrate = this.playerPickedUpCrate;
 	
 	      for (var i = 0; i < otherObjects.length; i++) {
 	        var otherObject = otherObjects[i];
 	        var collisionType = typeOfCollision(player, otherObject);
-	        if (otherObject.type === 'wall') {
-	          entityHitWall(player, collisionType);
+	        if (collisionType) {
+	          switch (otherObject.type) {
+	            case 'wall':
+	              entityHitWall(player, collisionType);
+	              break;
+	            case 'crate':
+	              game.score++;
+	              game.resetCrate();
+	              break;
+	            case 'enemy':
+	              game.reset();
+	              break;
+	            default:
+	              return;
+	          }
 	        }
 	      }
 	    }
 	  }, {
 	    key: 'handleEnemyCollisions',
-	    value: function handleEnemyCollisions(enemies, walls) {}
+	    value: function handleEnemyCollisions(enemies, walls) {
+	      var typeOfCollision = this.typeOfCollision;
+	      var entityHitWall = this.entityHitWall;
+	
+	      for (var i = 0; i < enemies.length; i++) {
+	        var enemy = enemies[i];
+	        for (var j = 0; j < walls.length; j++) {
+	          var wall = walls[j];
+	          var collisionType = typeOfCollision(enemy, wall);
+	          if (collisionType) {
+	            enemy.handleCollision(collisionType);
+	            entityHitWall(enemy, collisionType);
+	          }
+	        }
+	      }
+	    }
 	  }, {
 	    key: 'handleCrateCollisions',
-	    value: function handleCrateCollisions(crate, walls) {}
+	    value: function handleCrateCollisions(crate, walls) {
+	      var typeOfCollision = this.typeOfCollision;
+	      var entityHitWall = this.entityHitWall;
+	
+	      for (var i = 0; i < walls.length; i++) {
+	        var wall = walls[i];
+	        var collisionType = typeOfCollision(crate, wall);
+	        if (collisionType) {
+	          entityHitWall(crate, collisionType);
+	        }
+	      }
+	    }
 	  }, {
 	    key: 'entityHitWall',
 	    value: function entityHitWall(entity, collisionType) {
@@ -1268,8 +1397,10 @@
 	      var resetYVel = this.resetYVel;
 	      var nullYVel = this.nullYVel;
 	
-	      console.log(collisionType);
-	      this.collisionEl.innerHTML = collisionType;
+	      if (entity.type === 'player') {
+	
+	        this.collisionEl.innerHTML = collisionType;
+	      }
 	      switch (collisionType) {
 	        case 'bottom':
 	          resetYPos(entity);
@@ -1408,282 +1539,29 @@
 	  }, {
 	    key: '_collisionRight',
 	    value: function _collisionRight(rect1, rect2) {
-	      // const leftSideOf1 = rect1.x;
-	      // const rightSideOf1 = rect1.x + rect1.width;
-	      // const leftSideOf2 = rect2.x;
-	      // const rightSideOf2 = rect2.x + rect2.width;
 	      return rect1.x + rect1.w > rect2.x && rect1.x < rect2.x;
 	    }
 	  }, {
 	    key: '_collisionLeft',
 	    value: function _collisionLeft(rect1, rect2) {
-	      // const leftSideOf1 = rect1.x;
-	      // const rightSideOf1 = rect1.x + rect1.width;
-	      // const leftSideOf2 = rect2.x;
-	      // const rightSideOf2 = rect2.x + rect2.width;
 	      return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x + rect2.w;
 	    }
 	  }, {
 	    key: '_collisionTop',
 	    value: function _collisionTop(rect1, rect2) {
-	      // const topSideOf1 = rect1.y;
-	      // const bottomSideOf1 = rect1.y + rect1.height;
-	      // const topSideOf2 = rect2.y;
-	      // const bottomSideOf2 = rect2.y + rect2.height;
 	      return rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y + rect2.h;
 	    }
 	  }, {
 	    key: '_collisionBottom',
 	    value: function _collisionBottom(rect1, rect2) {
-	      // const topSideOf1 = rect1.y;
-	      // const bottomSideOf1 = rect1.y + rect1.height;
-	      // const topSideOf2 = rect2.y;
-	      // const bottomSideOf2 = rect2.y + rect2.height;
 	      return rect1.y + rect1.h > rect2.y && rect1.y < rect2.y;
 	    }
-	
-	    //   const rect1 = this._getRect(entity);
-	    //   for (let i = 0; i < collisionMap.length; i++) {
-	    //     const otherEntity = collisionMap[i];
-	    //     const rect2 = this._getRect(otherEntity);
-	    //
-	    //     const collisionType = this._collisionDetected(rect1, rect2);
-	    //     if (collisionType) {
-	    //       if (entity.type === 'enemy') {
-	    //         entity.handleCollision(collisionType);
-	    //       }
-	    //
-	    //       if (otherEntity.type === 'wall') {
-	    //         this._entityHitWall(entity, collisionType);
-	    //       }
-	    //
-	    //       if (entity.type === 'player' && otherEntity.type === 'crate') {
-	    //         this.score++;
-	    //         if (this.score > 9) {
-	    //           this.scoreEl.className = 'double_digits';
-	    //         }
-	    //         this.crate = new Crate({
-	    //           pos: [-100, -100],
-	    //           vel: [0, 0],
-	    //           sprite: SPRITES.CRATE
-	    //         });
-	    //         setTimeout(() => {
-	    //             this.crate = new Crate({
-	    //             pos: STAGES.STAGE_1_CRATE_SPAWN(),
-	    //             vel: [0, 10],
-	    //             sprite: SPRITES.CRATE
-	    //           });
-	    //         }, 500);
-	    //       }
-	    //
-	    //     }
-	    //   }
-	    //   return null;
-	    // }
-	    //
-	    //
-	    // getRect(entity) {
-	    //   const hitbox = entity.hitbox(this.ctx);
-	    //
-	    //   return {
-	    //     x: hitbox[0], y: hitbox[1], width: hitbox[2], height: hitbox[3]
-	    //   };
-	    // }
-	    //
-	    // collisionDetected(rect1, rect2) {
-	    //   const {
-	    //     _collisionRight,
-	    //     _collisionLeft,
-	    //     _collisionTop,
-	    //     _collisionBottom
-	    //   } = this;
-	    //
-	    //   if (rect1.x < rect2.x + rect2.width &&
-	    //       rect1.x + rect1.width > rect2.x &&
-	    //       rect1.y < rect2.y + rect2.height &&
-	    //       rect1.height + rect1.y > rect2.y) {
-	    //         const l = _collisionLeft(rect1, rect2);
-	    //         const r = _collisionRight(rect1, rect2);
-	    //         const t = _collisionTop(rect1, rect2);
-	    //         const b = _collisionBottom(rect1, rect2);
-	    //
-	    //         if ( t && b ) {
-	    //           return 'top-bottom';
-	    //         } else if (l && t) {
-	    //           return 'left-top';
-	    //         } else if (l && b ) {
-	    //           return 'left-bottom';
-	    //         } else if (r && t) {
-	    //           return 'right-top';
-	    //         } else if (r && b) {
-	    //           return 'right-bottom';
-	    //         } else if (l) {
-	    //           return 'left';
-	    //         } else if (r) {
-	    //           return 'right';
-	    //         } else if (t) {
-	    //           return 'top';
-	    //         } else if (b) {
-	    //           return 'bottom';
-	    //         }
-	    //
-	    //   }
-	    // }
-	    //
-	
-	    //
-	    // _entityHitWall(entity, collisionType) {
-	    //   if (entity.type === 'player') {
-	    //     this.collisionEl.innerHTML = `C: ${collisionType}`;
-	    //   }
-	    //   switch(collisionType) {
-	    //     case 'right':
-	    //       entity.vel[0] = 0;
-	    //       entity.pos[0] = entity.lastPos[0];
-	    //       break;
-	    //     case 'left':
-	    //       entity.vel[0] = 0;
-	    //       entity.pos[0] = entity.lastPos[0];
-	    //       break;
-	    //     case 'top':
-	    //       entity.vel[1] = -entity.vel[1] * 0.25;
-	    //       entity.pos[1] = entity.lastPos[1];
-	    //       break;
-	    //     case 'bottom':
-	    //       entity.vel[1] = 0;
-	    //       entity.pos[1] = entity.lastPos[1];
-	    //       break;
-	    //     case 'right-bottom':
-	    //       if (entity.pos[0] > entity.lastPos[0]) {
-	    //         entity.pos[0] = entity.lastPos[0];
-	    //       }
-	    //       if (entity.vel[0] === 0 && entity.vel[1] > 0) {
-	    //         entity.pos[0] = entity.lastPos[0];
-	    //       }
-	    //       if (entity.pos[1] > entity.lastPos[1] &&
-	    //          entity.vel[0] === 0) {
-	    //         entity.pos[1] = entity.lastPos[1];
-	    //         entity.vel[1] = 0;
-	    //       }
-	    //       if (entity.pos[1] > entity.lastPos[1] &&
-	    //          entity.vel[1] > 0) {
-	    //         entity.pos[1] = entity.lastPos[1] + 3;
-	    //         entity.vel[1] = -entity.vel[1] * 0.25;
-	    //       }
-	    //       break;
-	    //     case 'left-bottom':
-	    //       if (entity.pos[0] < entity.lastPos[0]) {
-	    //         entity.pos[0] = entity.lastPos[0];
-	    //       }
-	    //       if (entity.vel[0] === 0 && entity.vel[1] > 0) {
-	    //         entity.pos[0] = entity.lastPos[0];
-	    //       }
-	    //       if (entity.pos[1] > entity.lastPos[1] &&
-	    //          entity.vel[0] === 0) {
-	    //         entity.pos[1] = entity.lastPos[1];
-	    //         entity.vel[1] = 0;
-	    //       }
-	    //       if (entity.pos[1] > entity.lastPos[1] &&
-	    //          entity.vel[1] < 0) {
-	    //         entity.pos[1] = entity.lastPos[1] + 3;
-	    //         entity.vel[1] = -entity.vel[1] * 0.25;
-	    //       }
-	    //       break;
-	    //     case 'right-top':
-	    //       if (entity.vel[0] > 0) {
-	    //         entity.vel[0] = 0;
-	    //       }
-	    //       if (entity.pos[0] > entity.lastPos[0]) {
-	    //         entity.pos[0] = entity.lastPos[0];
-	    //       }
-	    //       if (entity.vel[1] < 0) {
-	    //         entity.pos[1] = entity.lastPos[1];
-	    //         entity.vel[1] = -entity.vel[1] * 0.25;
-	    //       }
-	    //       break;
-	    //     case 'left-top':
-	    //       if (entity.vel[0] < 0) {
-	    //         entity.vel[0] = 0;
-	    //       }
-	    //       if (entity.pos[0] < entity.lastPos[0]) {
-	    //         entity.pos[0] = entity.lastPos[0];
-	    //       }
-	    //       if (entity.vel[1] < 0) {
-	    //         entity.pos[1] = entity.lastPos[1];
-	    //         entity.vel[1] = -entity.vel[1] * 0.25;
-	    //       }
-	    //       break;
-	    //     case 'top-bottom':
-	    //       entity.pos[0] = entity.lastPos[0];
-	    //       break;
-	    //   }
-	    // }
-	
 	  }]);
 	
 	  return CollisionManager;
 	}();
 	
 	exports.default = CollisionManager;
-
-/***/ },
-/* 14 */,
-/* 15 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _CONSTANTS = __webpack_require__(4);
-	
-	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var Moveable = function () {
-	  function Moveable(opts) {
-	    _classCallCheck(this, Moveable);
-	
-	    var pos = opts.pos;
-	    var lastPos = opts.lastPos;
-	    var vel = opts.vel;
-	    var lastVel = opts.lastVel;
-	    var sprite = opts.sprite;
-	
-	    this.pos = pos;
-	    this.lastPos = [0, 0];
-	    this.vel = vel;
-	    this.lastVel = [0, 0];
-	    this.sprite = sprite;
-	
-	    this.update = this.update.bind(this);
-	  }
-	
-	  _createClass(Moveable, [{
-	    key: 'update',
-	    value: function update(dt) {
-	      this.lastPos[0] = this.pos[0];
-	      this.lastPos[1] = this.pos[1];
-	      this.lastVel[0] = this.vel[0];
-	      this.lastVel[1] = this.vel[1];
-	      this.vel[1] += CONSTANTS.GRAVITY * dt;
-	      this.pos[0] += this.vel[0] * dt;
-	      this.pos[1] += this.vel[1] * dt;
-	      this.sprite.update(dt);
-	    }
-	  }]);
-	
-	  return Moveable;
-	}();
-	
-	exports.default = Moveable;
 
 /***/ }
 /******/ ]);
