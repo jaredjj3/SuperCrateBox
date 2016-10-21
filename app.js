@@ -68,7 +68,7 @@
 	
 	var _Input2 = _interopRequireDefault(_Input);
 	
-	var _Enemy = __webpack_require__(10);
+	var _Enemy = __webpack_require__(9);
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
@@ -76,7 +76,7 @@
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(11);
+	var _STAGES = __webpack_require__(10);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -84,7 +84,7 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _CollisionManager = __webpack_require__(14);
+	var _CollisionManager = __webpack_require__(13);
 	
 	var _CollisionManager2 = _interopRequireDefault(_CollisionManager);
 	
@@ -133,11 +133,11 @@
 	      var render = this.render;
 	
 	      var now = Date.now();
-	
-	      // if ((this.lastEnemySpawnTime - now) > CONSTANTS.ENEMY_SPAWN_RATE) {
-	      // this.addEnemy();
-	      // }
 	      var dt = (now - this.lastTime) / 1000.0;
+	      var timeSinceLastEnemySpawn = now - this.lastEnemySpawnTime;
+	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE) {
+	        this.addEnemy();
+	      }
 	
 	      update(dt);
 	      render();
@@ -179,8 +179,8 @@
 	
 	      renderHtml();
 	      ctx.clearRect(0, 0, 900, 600);
-	      renderEntity(player);
 	      renderEntities(enemies);
+	      renderEntity(player);
 	      renderEntity(crate);
 	      renderEntities(stage);
 	    }
@@ -198,7 +198,7 @@
 	        _this.crate = new _Crate2.default({
 	          pos: STAGES.STAGE_1_CRATE_SPAWN(),
 	          vel: [0, 10],
-	          sprite: SPRITES.CRATE
+	          sprite: SPRITES.CRATE()
 	        });
 	      }, 500);
 	    }
@@ -214,19 +214,22 @@
 	        pos: [450, 300],
 	        lastPos: [450, 300],
 	        vel: [0, 0],
-	        sprite: SPRITES.PLAYER_IDLE
+	        sprites: {
+	          idle: SPRITES.PLAYER_IDLE(),
+	          runRight: SPRITES.PLAYER_RUN_RIGHT(),
+	          runLeft: SPRITES.PLAYER_RUN_LEFT(),
+	          floatRight: SPRITES.PLAYER_FLOAT_RIGHT(),
+	          floatLeft: SPRITES.PLAYER_FLOAT_LEFT()
+	        },
+	        sprite: SPRITES.PLAYER_IDLE()
 	      });
 	
-	      this.enemies = [new _Enemy2.default({
-	        pos: [400, 0],
-	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	        sprite: SPRITES.HAMMER_RUN_RIGHT
-	      })];
+	      this.enemies = [];
 	
 	      this.crate = new _Crate2.default({
 	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
 	        vel: [0, 10],
-	        sprite: SPRITES.CRATE
+	        sprite: SPRITES.CRATE()
 	      });
 	      this.stage = STAGES.STAGE_1;
 	
@@ -258,21 +261,26 @@
 	      this.collisionManager = new _CollisionManager2.default(this);
 	
 	      this.player = new _Player2.default({
+	        type: 'player',
 	        pos: [450, 300],
+	        lastPos: [450, 300],
 	        vel: [0, 0],
-	        sprite: SPRITES.PLAYER_IDLE
+	        sprites: {
+	          idle: SPRITES.PLAYER_IDLE(),
+	          runRight: SPRITES.PLAYER_RUN_RIGHT(),
+	          runLeft: SPRITES.PLAYER_RUN_LEFT(),
+	          floatRight: SPRITES.PLAYER_FLOAT_RIGHT(),
+	          floatLeft: SPRITES.PLAYER_FLOAT_LEFT()
+	        },
+	        sprite: SPRITES.PLAYER_IDLE()
 	      });
 	
-	      this.enemies = [new _Enemy2.default({
-	        pos: [400, 0],
-	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	        sprite: SPRITES.HAMMER_RUN_RIGHT
-	      })];
+	      this.enemies = [];
 	
 	      this.crate = new _Crate2.default({
 	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
 	        vel: [0, 10],
-	        sprite: SPRITES.CRATE
+	        sprite: SPRITES.CRATE()
 	      });
 	      this.stage = STAGES.STAGE_1;
 	    }
@@ -306,7 +314,8 @@
 	      var vy = this.player.vel[1].toFixed(0);
 	      var x = this.player.hitbox().x.toFixed(0);
 	      var y = this.player.hitbox().y.toFixed(0);
-	      this.velocityEl.innerHTML = 'V: ' + vx + ', ' + vy;
+	      this.velocityEl.innerHTML = 'Enemies: ' + this.enemies.length;
+	      // this.velocityEl.innerHTML = `V: ${vx}, ${vy}`;
 	      this.positionEl.innerHTML = 'P: ' + x + ', ' + y;
 	    }
 	  }, {
@@ -343,7 +352,11 @@
 	      this.enemies.push(new _Enemy2.default({
 	        pos: [400, 0],
 	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	        sprite: SPRITES.HAMMER_RUN_RIGHT
+	        sprites: {
+	          runLeft: SPRITES.HAMMER_RUN_LEFT(),
+	          runRight: SPRITES.HAMMER_RUN_RIGHT()
+	        },
+	        sprite: SPRITES.HAMMER_RUN_LEFT()
 	      }));
 	    }
 	  }]);
@@ -509,6 +522,8 @@
 	
 	    _this.type = 'player';
 	    _this.jumpNumber = 0;
+	    _this.isInAir = false;
+	    _this.lastJumpTime = 0;
 	
 	    _this.hitbox = function () {
 	      return {
@@ -520,29 +535,43 @@
 	    };
 	
 	    _this.handleInput = _this.handleInput.bind(_this);
+	    _this.handleJumpKeyPress = _this.handleJumpKeyPress.bind(_this);
+	    _this.handleCollision = _this.handleCollision.bind(_this);
 	    return _this;
 	  }
 	
 	  _createClass(Player, [{
+	    key: 'handleCollision',
+	    value: function handleCollision(collisionType) {
+	      if (!collisionType) {}
+	    }
+	  }, {
+	    key: 'handleJumpKeyPress',
+	    value: function handleJumpKeyPress() {
+	      this.jumpNumber++;
+	      this.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
+	    }
+	  }, {
+	    key: 'handleJumpKeyRelease',
+	    value: function handleJumpKeyRelease() {}
+	  }, {
 	    key: 'handleInput',
 	    value: function handleInput(dt) {
 	      var input = window.input;
 	      var pos = this.pos;
 	      var vel = this.vel;
+	      var sprites = this.sprites;
 	      var jumpNumber = this.jumpNumber;
-	      var PLAYER_VERTICAL_INIT_VEL = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
+	      var handleJumpKeyPress = this.handleJumpKeyPress;
+	      var handleJumpKeyRelease = this.handleJumpKeyRelease;
 	      var PLAYER_HORIZONTAL_VEL = CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      var PLAYER_HORIZONTAL_ACC = CONSTANTS.PLAYER_HORIZONTAL_ACC;
-	      var PLAYER_RUN_RIGHT = SPRITES.PLAYER_RUN_RIGHT;
-	      var PLAYER_RUN_LEFT = SPRITES.PLAYER_RUN_LEFT;
-	      var PLAYER_IDLE = SPRITES.PLAYER_IDLE;
 	
 	
 	      if (input.isDown('UP') || input.isDown('SPACE')) {
-	        if (true) {
-	          this.jumpNumber++;
-	          this.vel[1] = PLAYER_VERTICAL_INIT_VEL;
-	        }
+	        handleJumpKeyPress();
+	      } else {
+	        handleJumpKeyRelease();
 	      }
 	
 	      if (input.isDown('LEFT')) {
@@ -562,11 +591,11 @@
 	      }
 	
 	      if (vel[0] > 0) {
-	        this.sprite = PLAYER_RUN_RIGHT;
+	        this.sprite = sprites.runRight;
 	      } else if (vel[0] < 0) {
-	        this.sprite = PLAYER_RUN_LEFT;
+	        this.sprite = sprites.runLeft;
 	      } else {
-	        this.sprite = PLAYER_IDLE;
+	        this.sprite = sprites.idle;
 	      }
 	    }
 	  }]);
@@ -604,12 +633,14 @@
 	    var lastPos = opts.lastPos;
 	    var vel = opts.vel;
 	    var lastVel = opts.lastVel;
+	    var sprites = opts.sprites;
 	    var sprite = opts.sprite;
 	
 	    this.pos = pos;
 	    this.lastPos = [0, 0];
 	    this.vel = vel;
 	    this.lastVel = [0, 0];
+	    this.sprites = sprites;
 	    this.sprite = sprite;
 	
 	    this.update = this.update.bind(this);
@@ -650,7 +681,7 @@
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 0;
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // scales with number of crates collected
 
 /***/ },
 /* 5 */
@@ -661,7 +692,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
+	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
 	
 	var _Sprite = __webpack_require__(6);
 	
@@ -669,93 +700,135 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var PLAYER_IDLE = exports.PLAYER_IDLE = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-	  size: [64, 64],
-	  speed: 24,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
+	var PLAYER_IDLE = exports.PLAYER_IDLE = function PLAYER_IDLE() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+	    size: [64, 64],
+	    speed: 24,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
 	
-	var PLAYER_RUN_RIGHT = exports.PLAYER_RUN_RIGHT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [5, 6, 7, 8, 9, 8, 7, 6],
-	  size: [64, 64],
-	  speed: 18,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
+	var PLAYER_RUN_RIGHT = exports.PLAYER_RUN_RIGHT = function PLAYER_RUN_RIGHT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [5, 6, 7, 8, 9, 8, 7, 6],
+	    size: [64, 64],
+	    speed: 18,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
 	
-	var PLAYER_RUN_LEFT = exports.PLAYER_RUN_LEFT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [6, 7, 8, 9, 8, 7, 6, 5],
-	  size: [64, 64],
-	  speed: 18,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'left'
-	});
+	var PLAYER_RUN_LEFT = exports.PLAYER_RUN_LEFT = function PLAYER_RUN_LEFT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [6, 7, 8, 9, 8, 7, 6, 5],
+	    size: [64, 64],
+	    speed: 18,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'left'
+	  });
+	};
 	
-	var PLAYER_JUMP_RIGHT = exports.PLAYER_JUMP_RIGHT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
-	  size: [64, 64],
-	  speed: 24,
-	  dir: 'horizontal',
-	  once: true,
-	  facing: 'right'
-	});
+	var PLAYER_FLOAT_RIGHT = exports.PLAYER_FLOAT_RIGHT = function PLAYER_FLOAT_RIGHT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [5, 6, 7, 8, 9, 8, 7, 6],
+	    size: [64, 64],
+	    speed: 18,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
 	
-	var PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_LEFT = new _Sprite2.default({
-	  url: './lib/img/jay.png',
-	  pos: [0, 0],
-	  frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
-	  size: [64, 64],
-	  speed: 24,
-	  dir: 'horizontal',
-	  once: true,
-	  facing: 'left'
-	});
+	var PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_LEFT = function PLAYER_FLOAT_LEFT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [6, 7, 8, 9, 8, 7, 6, 5],
+	    size: [64, 64],
+	    speed: 18,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'left'
+	  });
+	};
 	
-	var CRATE = exports.CRATE = new _Sprite2.default({
-	  url: './lib/img/crate.png',
-	  pos: [0, 0],
-	  frames: [0],
-	  size: [20, 20],
-	  speed: 1,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
+	var PLAYER_JUMP_RIGHT = exports.PLAYER_JUMP_RIGHT = function PLAYER_JUMP_RIGHT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
+	    size: [64, 64],
+	    speed: 24,
+	    dir: 'horizontal',
+	    once: true,
+	    facing: 'right'
+	  });
+	};
 	
-	var HAMMER_RUN_RIGHT = exports.HAMMER_RUN_RIGHT = new _Sprite2.default({
-	  url: './lib/img/hammer.png',
-	  pos: [0, 0],
-	  frames: [0, 1, 2, 3, 4, 3, 2, 1],
-	  size: [64, 64],
-	  speed: 13,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'right'
-	});
+	var PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_LEFT = function PLAYER_JUMP_LEFT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [10, 11, 11, 12, 12, 12, 12, 12, 12, 12],
+	    size: [64, 64],
+	    speed: 24,
+	    dir: 'horizontal',
+	    once: true,
+	    facing: 'left'
+	  });
+	};
 	
-	var HAMMER_RUN_LEFT = exports.HAMMER_RUN_LEFT = new _Sprite2.default({
-	  url: './lib/img/hammer.png',
-	  pos: [0, 0],
-	  frames: [0, 1, 2, 3, 4, 3, 2, 1],
-	  size: [64, 64],
-	  speed: 13,
-	  dir: 'horizontal',
-	  once: false,
-	  facing: 'left'
-	});
+	var CRATE = exports.CRATE = function CRATE() {
+	  return new _Sprite2.default({
+	    url: './lib/img/crate.png',
+	    pos: [0, 0],
+	    frames: [0],
+	    size: [20, 20],
+	    speed: 1,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
+	var HAMMER_RUN_RIGHT = exports.HAMMER_RUN_RIGHT = function HAMMER_RUN_RIGHT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/hammer.png',
+	    pos: [0, 0],
+	    frames: [0, 1, 2, 3, 4, 3, 2, 1],
+	    size: [64, 64],
+	    speed: 10,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
+	var HAMMER_RUN_LEFT = exports.HAMMER_RUN_LEFT = function HAMMER_RUN_LEFT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/hammer.png',
+	    pos: [0, 0],
+	    frames: [0, 1, 2, 3, 4, 3, 2, 1],
+	    size: [64, 64],
+	    speed: 10,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'left'
+	  });
+	};
 
 /***/ },
 /* 6 */
@@ -999,8 +1072,7 @@
 	exports.default = new Input();
 
 /***/ },
-/* 9 */,
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1076,12 +1148,16 @@
 	  }, {
 	    key: 'update',
 	    value: function update(dt) {
-	      if (this.direction === 'left') {
-	        this.vel[0] = -this.speed;
-	        this.sprite = SPRITES.HAMMER_RUN_RIGHT; // facing wrong way in sprite sheet
-	      } else if (this.direction === 'right') {
-	        this.vel[0] = this.speed;
-	        this.sprite = SPRITES.HAMMER_RUN_LEFT; // facing wrong way in sprite sheet
+	      var sprites = this.sprites;
+	      var direction = this.direction;
+	      var speed = this.speed;
+	
+	      if (direction === 'left') {
+	        this.vel[0] = -speed;
+	        this.sprite = sprites.runRight; // facing wrong way in sprite sheet
+	      } else if (direction === 'right') {
+	        this.vel[0] = speed;
+	        this.sprite = sprites.runLeft; // facing wrong way in sprite sheet
 	      }
 	      if (this.pos[0] > 900 || this.pos[1] > 600) {
 	        this.pos[0] = 400;
@@ -1108,7 +1184,7 @@
 	exports.default = Enemy;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1118,7 +1194,7 @@
 	});
 	exports.STAGE_1_CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
-	var _Wall = __webpack_require__(12);
+	var _Wall = __webpack_require__(11);
 	
 	var _Wall2 = _interopRequireDefault(_Wall);
 	
@@ -1195,7 +1271,7 @@
 	  var sample = function sample(max) {
 	    return Math.floor(Math.random() * max);
 	  };
-	  var seed = [[110, 230], [120, 230], [100, 230], [90, 230], [440, 330], [450, 330], [430, 330], [420, 330], [180, 520], [190, 520], [170, 520], [160, 520], [690, 520], [780, 230], [790, 230], [770, 230], [760, 230], [440, 100], [450, 100], [430, 100], [420, 100]][sample(21)];
+	  var seed = [[110, 230], [120, 230], [100, 230], [90, 230], [440, 330], [450, 330], [430, 330], [420, 330], [180, 520], [190, 520], [170, 520], [160, 520], [690, 520], [780, 230], [790, 230], [770, 230], [760, 230]][sample(17)];
 	  var multiplier = 1;
 	  if (Math.random() > 0.5) {
 	    multiplier = -1;
@@ -1204,7 +1280,7 @@
 	};
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1213,7 +1289,7 @@
 	  value: true
 	});
 	
-	var _WallSprite = __webpack_require__(13);
+	var _WallSprite = __webpack_require__(12);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
@@ -1247,7 +1323,7 @@
 	exports.default = Wall;
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1296,7 +1372,7 @@
 	exports.default = WallSprite;
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1310,6 +1386,12 @@
 	var _Crate = __webpack_require__(7);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
