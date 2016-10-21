@@ -1,14 +1,15 @@
 .game_container {
+  width: 900px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 
 .canvas_container {
   width: 900px;
   height: 600px;
   border-bottom: 1px solid black;
+  position: relative;
 }
 
 .single_digits {
@@ -16,7 +17,7 @@
   font-size: 72px;
   color: black;
   top: -30px;
-  left: 475px;
+  left: 445px;
 }
 
 .double_digits {
@@ -24,5 +25,5 @@
   font-size: 72px;
   color: green;
   top: -30px;
-  left: 462px;
+  left: 430px;
 }

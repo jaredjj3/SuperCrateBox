@@ -56,39 +56,41 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
-	var _Crate = __webpack_require__(10);
+	var _Crate = __webpack_require__(3);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
-	var _Sprite = __webpack_require__(3);
+	var _Sprite = __webpack_require__(5);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
-	var _Input = __webpack_require__(4);
+	var _Input = __webpack_require__(6);
 	
 	var _Input2 = _interopRequireDefault(_Input);
 	
-	var _ENEMIES = __webpack_require__(11);
+	var _ENEMIES = __webpack_require__(7);
 	
 	var ENEMIES = _interopRequireWildcard(_ENEMIES);
 	
-	var _SPRITES = __webpack_require__(5);
+	var _SPRITES = __webpack_require__(9);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(6);
+	var _STAGES = __webpack_require__(10);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
-	var _CONSTANTS = __webpack_require__(9);
+	var _CONSTANTS = __webpack_require__(4);
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	var _CollisionManager = __webpack_require__(13);
+	
+	var _CollisionManager2 = _interopRequireDefault(_CollisionManager);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -98,31 +100,29 @@
 	
 	    this.play = this.play.bind(this);
 	    this.main = this.main.bind(this);
-	    this._reset = this._reset.bind(this);
 	    this.update = this.update.bind(this);
 	    this.render = this.render.bind(this);
-	    this._getRect = this._getRect.bind(this);
-	    this.handleInput = this.handleInput.bind(this);
+	    this.setup = this.setup.bind(this);
+	    this.reset = this.reset.bind(this);
+	    this.renderHtml = this.renderHtml.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
-	    this._isReadyToJump = this._isReadyToJump.bind(this);
-	    this.updateEntities = this.updateEntities.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
-	    this.checkCollision = this.checkCollision.bind(this);
-	    this.checkCollisions = this.checkCollisions.bind(this);
 	    this.checkPlayerBounds = this.checkPlayerBounds.bind(this);
+	    this.allObjects = this.allObjects.bind(this);
+	    this.updateEntities = this.updateEntities.bind(this);
 	  }
 	
 	  _createClass(SuperCrateBox, [{
 	    key: 'play',
 	    value: function play() {
 	      this.lastTime = Date.now();
-	      this._setup();
+	      this.setup();
 	    }
 	  }, {
 	    key: 'main',
 	    value: function main() {
 	      if (this.gameOver) {
-	        this._reset();
+	        this.reset();
 	        return;
 	      }
 	      var update = this.update;
@@ -140,171 +140,48 @@
 	  }, {
 	    key: 'update',
 	    value: function update(dt) {
-	      this.handleInput(dt);
-	      this.updateEntities(dt);
-	      this.checkCollisions([this.player, this.crate, this.enemies[0]]);
-	      this.checkPlayerBounds();
-	    }
-	  }, {
-	    key: 'checkPlayerBounds',
-	    value: function checkPlayerBounds() {
-	      if (this.player.pos[1] > 570) {
-	        this.gameOver = true;
-	      }
-	    }
-	  }, {
-	    key: 'handleInput',
-	    value: function handleInput(dt) {
-	      var input = window.input;
-	
-	      if (input.isDown('UP') || input.isDown('SPACE')) {
-	        if (this._isReadyToJump()) {
-	          this.player.isJumping = true;
-	          this.player.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
-	        }
-	      }
-	
-	      if (input.isDown('LEFT')) {
-	        if (this.player.vel[0] > -CONSTANTS.PLAYER_HORIZONTAL_VEL) {
-	          this.player.vel[0] -= CONSTANTS.PLAYER_HORIZONTAL_ACC * dt;
-	        } else {
-	          this.player.vel[0] = -CONSTANTS.PLAYER_HORIZONTAL_VEL;
-	        }
-	      } else if (input.isDown('RIGHT')) {
-	        if (this.player.vel[0] < CONSTANTS.PLAYER_HORIZONTAL_VEL) {
-	          this.player.vel[0] += CONSTANTS.PLAYER_HORIZONTAL_ACC * dt;
-	        } else {
-	          this.player.vel[0] = CONSTANTS.PLAYER_HORIZONTAL_VEL;
-	        }
-	      } else {
-	        this.player.vel[0] = 0;
-	      }
-	
-	      var vel = this.player.vel;
-	
-	      if (vel[0] > 0) {
-	        this.player.sprite = SPRITES.PLAYER_RUN_RIGHT;
-	      } else if (vel[0] < 0) {
-	        this.player.sprite = SPRITES.PLAYER_RUN_LEFT;
-	      } else {
-	        this.player.sprite = SPRITES.PLAYER_IDLE;
-	      }
-	
-	      this.player.lastPos[0] = this.player.pos[0];
-	      this.player.lastPos[1] = this.player.pos[1];
-	      this.player.vel[1] += CONSTANTS.GRAVITY * dt;
-	      this.player.pos[0] += this.player.vel[0] * dt;
-	      this.player.pos[1] += this.player.vel[1] * dt;
-	    }
-	  }, {
-	    key: 'checkCollision',
-	    value: function checkCollision(entity) {
-	      var _this = this;
-	
-	      var walls = this.stage;
-	      var enemies = this.enemies;
+	      var player = this.player;
 	      var crate = this.crate;
+	      var enemies = this.enemies;
+	      var handleInput = this.handleInput;
+	      var allObjects = this.allObjects;
+	      var updateEntities = this.updateEntities;
+	      var checkCollisions = this.checkCollisions;
+	      var checkPlayerBounds = this.checkPlayerBounds;
+	      var collisionManager = this.collisionManager;
 	
-	      var collisionMap = [].concat(_toConsumableArray(walls), _toConsumableArray(enemies), [crate]);
 	
-	      var rect1 = this._getRect(entity);
-	      for (var i = 0; i < collisionMap.length; i++) {
-	        var otherEntity = collisionMap[i];
-	        var rect2 = this._getRect(otherEntity);
-	
-	        var collisionType = this._collisionDetected(rect1, rect2);
-	        if (collisionType) {
-	          if (entity.type === 'enemy') {
-	            entity.vel[0] = Math.random() > 0.3 ? -100 : 0;
-	            entity.vel[1] = Math.random() > 0.4 ? -450 : 0;
-	          }
-	
-	          if (otherEntity.type === 'wall') {
-	            this._entityHitWall(entity, collisionType);
-	          }
-	
-	          if (entity.type === 'player' && otherEntity.type === 'crate') {
-	            this.score++;
-	            if (this.score > 9) {
-	              this.scoreEl.className = 'double_digits';
-	            }
-	            this.crate = new _Crate2.default({
-	              pos: [-100, -100],
-	              vel: [0, 0],
-	              sprite: SPRITES.CRATE
-	            });
-	            setTimeout(function () {
-	              _this.crate = new _Crate2.default({
-	                pos: STAGES.STAGE_1_CRATE_SPAWN(),
-	                vel: [0, 10],
-	                sprite: SPRITES.CRATE
-	              });
-	            }, 500);
-	          }
-	        }
-	      }
-	      return null;
-	    }
-	  }, {
-	    key: 'checkCollisions',
-	    value: function checkCollisions(list) {
-	      for (var i = 0; i < list.length; i++) {
-	        this.checkCollision(list[i]);
-	      }
-	    }
-	  }, {
-	    key: 'updateEntities',
-	    value: function updateEntities(dt) {
-	      this.player.sprite.update(dt);
-	      this.crate.update(dt);
-	      for (var i = 0; i < this.enemies.length; i++) {
-	        this.enemies[i].update(dt);
-	      }
+	      player.handleInput(dt);
+	      updateEntities(dt);
+	      collisionManager.handleCollisions(allObjects());
+	      checkPlayerBounds();
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var renderEntity = this.renderEntity;
-	      var renderEntities = this.renderEntities;
+	      var ctx = this.ctx;
 	      var player = this.player;
 	      var enemies = this.enemies;
-	      var stage = this.stage;
 	      var crate = this.crate;
-	      var ctx = this.ctx;
-	      var score = this.score;
+	      var stage = this.stage;
+	      var renderEntity = this.renderEntity;
+	      var renderEntities = this.renderEntities;
+	      var renderHtml = this.renderHtml;
 	
-	      this.scoreEl.innerHTML = this.score;
-	      this.velocityEl.innerHTML = 'V: ' + this.player.vel[0].toFixed(0) + ', ' + this.player.vel[1].toFixed(0);
-	      this.positionEl.innerHTML = 'P: ' + this.player.hitbox()[0].toFixed(0) + ', ' + this.player.hitbox()[1].toFixed(0);
+	
+	      renderHtml();
 	      ctx.clearRect(0, 0, 900, 600);
 	      renderEntity(player);
 	      renderEntities(enemies);
 	      renderEntity(crate);
 	      renderEntities(stage);
 	    }
-	  }, {
-	    key: 'renderEntity',
-	    value: function renderEntity(entity) {
-	      var ctx = this.ctx;
-	
-	      ctx.save();
-	      ctx.translate(entity.pos[0], entity.pos[1]);
-	      entity.sprite.render(ctx);
-	      ctx.restore();
-	    }
-	  }, {
-	    key: 'renderEntities',
-	    value: function renderEntities(list) {
-	      for (var i = 0; i < list.length; i++) {
-	        this.renderEntity(list[i]);
-	      }
-	    }
 	
 	    // private
 	
 	  }, {
-	    key: '_reset',
-	    value: function _reset() {
+	    key: 'reset',
+	    value: function reset() {
 	      this.gameOver = false;
 	      this.score = 0;
 	      this.scoreEl.className = 'single_digits';
@@ -328,221 +205,98 @@
 	      this.main();
 	    }
 	  }, {
-	    key: '_setup',
-	    value: function _setup() {
-	      var _this2 = this;
+	    key: 'setup',
+	    value: function setup() {
+	      var _this = this;
 	
-	      // set game state;
 	      this.gameOver = false;
-	
-	      // makes reference to canvas
-	      var canvas = document.getElementById('canvas');
-	      this.ctx = canvas.getContext('2d');
 	
 	      // loads resources
 	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png']);
 	      var init = function init() {
-	        _this2.main();
+	        _this.main();
 	      };
 	      _Resources2.default.onReady(init);
-	
-	      // Sets event listeners
 	      _Input2.default.setup();
 	
-	      // sets game state
+	      // HTML Elements
+	      var canvas = document.getElementById('canvas');
+	      this.ctx = canvas.getContext('2d');
+	      this.score = 0;
+	      this.scoreEl = document.getElementById('score');
+	      this.scoreEl.className = 'single_digits';
+	      this.velocityEl = document.getElementById('velocity');
+	      this.positionEl = document.getElementById('position');
+	      this.collisionManager = new _CollisionManager2.default();
+	
 	      this.player = new _Player2.default({
-	        type: 'player',
 	        pos: [450, 300],
-	        lastPos: [450, 300],
 	        vel: [0, 0],
 	        sprite: SPRITES.PLAYER_IDLE
 	      });
 	
-	      this.enemies = [ENEMIES.ENEMY_1()];
+	      this.enemies = [];
+	
 	      this.crate = new _Crate2.default({
 	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
 	        vel: [0, 10],
 	        sprite: SPRITES.CRATE
 	      });
 	      this.stage = STAGES.STAGE_1;
-	
-	      this.score = 0;
-	      this.scoreEl = document.getElementById('score');
-	      this.scoreEl.className = 'single_digits';
-	      this.velocityEl = document.getElementById('velocity');
-	      this.positionEl = document.getElementById('position');
-	      this.collisionEl = document.getElementById('collision');
 	    }
 	  }, {
-	    key: '_getRect',
-	    value: function _getRect(entity) {
-	      var hitbox = entity.hitbox(this.ctx);
-	
-	      return {
-	        x: hitbox[0], y: hitbox[1], width: hitbox[2], height: hitbox[3]
-	      };
-	    }
-	  }, {
-	    key: '_isReadyToJump',
-	    value: function _isReadyToJump() {
-	      var jumpTiming = Date.now() - this.player.lastJumpTime;
-	      return jumpTiming >= CONSTANTS.JUMP_TIME;
-	    }
-	  }, {
-	    key: '_collisionDetected',
-	    value: function _collisionDetected(rect1, rect2) {
-	      var _collisionRight = this._collisionRight;
-	      var _collisionLeft = this._collisionLeft;
-	      var _collisionTop = this._collisionTop;
-	      var _collisionBottom = this._collisionBottom;
-	
-	
-	      if (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y) {
-	        var l = _collisionLeft(rect1, rect2);
-	        var r = _collisionRight(rect1, rect2);
-	        var t = _collisionTop(rect1, rect2);
-	        var b = _collisionBottom(rect1, rect2);
-	
-	        if (t && b) {
-	          return 'top-bottom';
-	        } else if (l && t) {
-	          return 'left-top';
-	        } else if (l && b) {
-	          return 'left-bottom';
-	        } else if (r && t) {
-	          return 'right-top';
-	        } else if (r && b) {
-	          return 'right-bottom';
-	        } else if (l) {
-	          return 'left';
-	        } else if (r) {
-	          return 'right';
-	        } else if (t) {
-	          return 'top';
-	        } else if (b) {
-	          return 'bottom';
-	        }
+	    key: 'updateEntities',
+	    value: function updateEntities(dt) {
+	      this.player.update(dt);
+	      this.crate.update(dt);
+	      for (var i = 0; i < this.enemies.length; i++) {
+	        this.enemies[i].update(dt);
 	      }
 	    }
 	  }, {
-	    key: '_collisionRight',
-	    value: function _collisionRight(rect1, rect2) {
-	      var leftSideOf1 = rect1.x;
-	      var rightSideOf1 = rect1.x + rect1.width;
-	      var leftSideOf2 = rect2.x;
-	      var rightSideOf2 = rect2.x + rect2.width;
-	      return rightSideOf1 > leftSideOf2 && leftSideOf1 < leftSideOf2;
-	    }
-	  }, {
-	    key: '_collisionLeft',
-	    value: function _collisionLeft(rect1, rect2) {
-	      var leftSideOf1 = rect1.x;
-	      var rightSideOf1 = rect1.x + rect1.width;
-	      var leftSideOf2 = rect2.x;
-	      var rightSideOf2 = rect2.x + rect2.width;
-	      return leftSideOf1 < rightSideOf2 && rightSideOf1 > rightSideOf2;
-	    }
-	  }, {
-	    key: '_collisionTop',
-	    value: function _collisionTop(rect1, rect2) {
-	      var topSideOf1 = rect1.y;
-	      var bottomSideOf1 = rect1.y + rect1.height;
-	      var topSideOf2 = rect2.y;
-	      var bottomSideOf2 = rect2.y + rect2.height;
-	      return topSideOf1 < bottomSideOf2 && bottomSideOf1 > bottomSideOf2;
-	    }
-	  }, {
-	    key: '_collisionBottom',
-	    value: function _collisionBottom(rect1, rect2) {
-	      var topSideOf1 = rect1.y;
-	      var bottomSideOf1 = rect1.y + rect1.height;
-	      var topSideOf2 = rect2.y;
-	      var bottomSideOf2 = rect2.y + rect2.height;
-	      return bottomSideOf1 > topSideOf2 && topSideOf1 < topSideOf2;
-	    }
-	  }, {
-	    key: '_entityHitWall',
-	    value: function _entityHitWall(entity, collisionType) {
-	      if (entity.type === 'enemy') {
-	        this.collisionEl.innerHTML = 'C: ' + collisionType;
+	    key: 'checkPlayerBounds',
+	    value: function checkPlayerBounds() {
+	      if (this.player.pos[1] > 570) {
+	        this.gameOver = true;
 	      }
-	      switch (collisionType) {
-	        case 'right':
-	          entity.vel[0] = 0;
-	          entity.pos[0] = entity.lastPos[0];
-	          break;
-	        case 'left':
-	          entity.vel[0] = 0;
-	          entity.pos[0] = entity.lastPos[0];
-	          break;
-	        case 'top':
-	          entity.vel[1] = -entity.vel[1] * 0.25;
-	          entity.pos[1] = entity.lastPos[1];
-	          break;
-	        case 'bottom':
-	          entity.vel[1] = 0;
-	          entity.pos[1] = entity.lastPos[1];
-	          break;
-	        case 'right-bottom':
-	          if (entity.pos[0] > entity.lastPos[0]) {
-	            entity.pos[0] = entity.lastPos[0];
-	          }
-	          if (entity.vel[0] === 0 && entity.vel[1] > 0) {
-	            entity.pos[0] = entity.lastPos[0];
-	          }
-	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[0] === 0) {
-	            entity.pos[1] = entity.lastPos[1];
-	            entity.vel[1] = 0;
-	          }
-	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[1] > 0) {
-	            entity.pos[1] = entity.lastPos[1] + 3;
-	            entity.vel[1] = -entity.vel[1] * 0.25;
-	          }
-	          break;
-	        case 'left-bottom':
-	          if (entity.pos[0] < entity.lastPos[0]) {
-	            entity.pos[0] = entity.lastPos[0];
-	          }
-	          if (entity.vel[0] === 0 && entity.vel[1] > 0) {
-	            entity.pos[0] = entity.lastPos[0];
-	          }
-	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[0] === 0) {
-	            entity.pos[1] = entity.lastPos[1];
-	            entity.vel[1] = 0;
-	          }
-	          if (entity.pos[1] > entity.lastPos[1] && entity.vel[1] < 0) {
-	            entity.pos[1] = entity.lastPos[1] + 3;
-	            entity.vel[1] = -entity.vel[1] * 0.25;
-	          }
-	          break;
-	        case 'right-top':
-	          if (entity.vel[0] > 0) {
-	            entity.vel[0] = 0;
-	          }
-	          if (entity.pos[0] > entity.lastPos[0]) {
-	            entity.pos[0] = entity.lastPos[0];
-	          }
-	          if (entity.vel[1] < 0) {
-	            entity.pos[1] = entity.lastPos[1];
-	            entity.vel[1] = -entity.vel[1] * 0.25;
-	          }
-	          break;
-	        case 'left-top':
-	          if (entity.vel[0] < 0) {
-	            entity.vel[0] = 0;
-	          }
-	          if (entity.pos[0] < entity.lastPos[0]) {
-	            entity.pos[0] = entity.lastPos[0];
-	          }
-	          if (entity.vel[1] < 0) {
-	            entity.pos[1] = entity.lastPos[1];
-	            entity.vel[1] = -entity.vel[1] * 0.25;
-	          }
-	          break;
-	        case 'top-bottom':
-	          entity.pos[0] = entity.lastPos[0];
-	          break;
+	    }
+	  }, {
+	    key: 'renderHtml',
+	    value: function renderHtml() {
+	      this.scoreEl.innerHTML = this.score;
+	      var vx = this.player.vel[0].toFixed(0);
+	      var vy = this.player.vel[1].toFixed(0);
+	      var x = this.player.hitbox().x.toFixed(0);
+	      var y = this.player.hitbox().y.toFixed(0);
+	      this.velocityEl.innerHTML = 'V: ' + vx + ', ' + vy;
+	      this.positionEl.innerHTML = 'P: ' + x + ', ' + y;
+	    }
+	  }, {
+	    key: 'renderEntity',
+	    value: function renderEntity(entity) {
+	      var ctx = this.ctx;
+	
+	      ctx.save();
+	      ctx.translate(entity.pos[0], entity.pos[1]);
+	      entity.sprite.render(ctx);
+	      ctx.restore();
+	    }
+	  }, {
+	    key: 'renderEntities',
+	    value: function renderEntities(list) {
+	      for (var i = 0; i < list.length; i++) {
+	        this.renderEntity(list[i]);
 	      }
+	    }
+	  }, {
+	    key: 'allObjects',
+	    value: function allObjects() {
+	      var player = this.player;
+	      var enemies = this.enemies;
+	      var crate = this.crate;
+	      var stage = this.stage;
+	
+	      return { player: player, enemies: enemies, crate: crate, stage: stage };
 	    }
 	  }]);
 	
@@ -665,7 +419,7 @@
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -675,46 +429,174 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
+	var _Moveable2 = __webpack_require__(15);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	var _SPRITES = __webpack_require__(9);
+	
+	var SPRITES = _interopRequireWildcard(_SPRITES);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Player = function () {
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Player = function (_Moveable) {
+	  _inherits(Player, _Moveable);
+	
 	  function Player(opts) {
 	    _classCallCheck(this, Player);
 	
-	    var pos = opts.pos;
-	    var vel = opts.vel;
-	    var sprite = opts.sprite;
-	    var lastPos = opts.lastPos;
+	    var _this = _possibleConstructorReturn(this, (Player.__proto__ || Object.getPrototypeOf(Player)).call(this, opts));
 	
-	    this.type = 'player';
-	    this.pos = pos;
-	    this.lastPos = lastPos;
-	    this.vel = vel;
-	    this.sprite = sprite;
-	    this.isJumping = false;
-	    this.jumpNumber = 0;
-	    this.lastJumpTime = Date.now();
+	    _this.type = 'player';
+	    _this.jumpNumber = 0;
 	
-	    this.hitbox = this.hitbox.bind(this);
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0] + 20,
+	        y: _this.pos[1] + 15,
+	        w: 27,
+	        h: 49
+	      };
+	    };
+	
+	    _this.handleInput = _this.handleInput.bind(_this);
+	    return _this;
 	  }
 	
 	  _createClass(Player, [{
-	    key: 'hitbox',
-	    value: function hitbox() {
+	    key: 'handleInput',
+	    value: function handleInput(dt) {
+	      var input = window.input;
 	      var pos = this.pos;
-	      var sprite = this.sprite;
+	      var vel = this.vel;
+	      var jumpNumber = this.jumpNumber;
+	      var PLAYER_VERTICAL_INIT_VEL = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
+	      var PLAYER_HORIZONTAL_VEL = CONSTANTS.PLAYER_HORIZONTAL_VEL;
+	      var PLAYER_HORIZONTAL_ACC = CONSTANTS.PLAYER_HORIZONTAL_ACC;
+	      var PLAYER_RUN_RIGHT = SPRITES.PLAYER_RUN_RIGHT;
+	      var PLAYER_RUN_LEFT = SPRITES.PLAYER_RUN_LEFT;
+	      var PLAYER_IDLE = SPRITES.PLAYER_IDLE;
 	
-	      return [pos[0] + 20, pos[1] + 15, 27, 49];
+	
+	      if (input.isDown('UP') || input.isDown('SPACE')) {
+	        if (true) {
+	          this.jumpNumber++;
+	          this.vel[1] = PLAYER_VERTICAL_INIT_VEL;
+	        }
+	      }
+	
+	      if (input.isDown('LEFT')) {
+	        if (vel[0] > -PLAYER_HORIZONTAL_VEL) {
+	          this.vel[0] -= PLAYER_HORIZONTAL_ACC * dt;
+	        } else {
+	          this.vel[0] = -PLAYER_HORIZONTAL_VEL;
+	        }
+	      } else if (input.isDown('RIGHT')) {
+	        if (this.vel[0] < PLAYER_HORIZONTAL_VEL) {
+	          this.vel[0] += PLAYER_HORIZONTAL_ACC * dt;
+	        } else {
+	          this.vel[0] = PLAYER_HORIZONTAL_VEL;
+	        }
+	      } else {
+	        this.vel[0] = 0;
+	      }
+	
+	      if (vel[0] > 0) {
+	        this.sprite = PLAYER_RUN_RIGHT;
+	      } else if (vel[0] < 0) {
+	        this.sprite = PLAYER_RUN_LEFT;
+	      } else {
+	        this.sprite = PLAYER_IDLE;
+	      }
 	    }
 	  }]);
 	
 	  return Player;
-	}();
+	}(_Moveable3.default);
 	
 	exports.default = Player;
 
 /***/ },
 /* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var _Moveable2 = __webpack_require__(15);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Crate = function (_Moveable) {
+	  _inherits(Crate, _Moveable);
+	
+	  function Crate(opts) {
+	    _classCallCheck(this, Crate);
+	
+	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
+	
+	    _this.type = 'crate';
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0],
+	        y: _this.pos[1],
+	        w: _this.sprite.size[0],
+	        h: _this.sprite.size[1]
+	      };
+	    };
+	    return _this;
+	  }
+	
+	  return Crate;
+	}(_Moveable3.default);
+	
+	exports.default = Crate;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
+	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
+	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
+	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
+	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
+	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 300;
+	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -300;
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -820,7 +702,7 @@
 	exports.default = Sprite;
 
 /***/ },
-/* 4 */
+/* 6 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -905,7 +787,136 @@
 	exports.default = new Input();
 
 /***/ },
-/* 5 */
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.ENEMY_1 = undefined;
+	
+	var _Enemy = __webpack_require__(8);
+	
+	var _Enemy2 = _interopRequireDefault(_Enemy);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	var _SPRITES = __webpack_require__(9);
+	
+	var SPRITES = _interopRequireWildcard(_SPRITES);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var multiplier = function multiplier() {
+	  if (Math.random() > 0.5) {
+	    return -1;
+	  }
+	  return 1;
+	};
+	
+	var ENEMY_1 = exports.ENEMY_1 = function ENEMY_1() {
+	  return new _Enemy2.default({
+	    type: 'enemy',
+	    pos: [400, 0],
+	    lastPos: [450, 0],
+	    vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	    sprite: SPRITES.PLAYER_IDLE
+	  });
+	};
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _Moveable2 = __webpack_require__(15);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Enemy = function (_Moveable) {
+	  _inherits(Enemy, _Moveable);
+	
+	  function Enemy(opts) {
+	    _classCallCheck(this, Enemy);
+	
+	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
+	
+	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0] + 20,
+	        y: _this.pos[1] + 15,
+	        w: 27,
+	        h: 49
+	      };
+	    };
+	
+	    _this.handleCollision = _this.handleCollision.bind(_this);
+	    _this.update = _this.update.bind(_this);
+	    return _this;
+	  }
+	
+	  _createClass(Enemy, [{
+	    key: 'handleCollision',
+	    value: function handleCollision(collisionType) {
+	      if (collisionType === 'right') {
+	        this.direction = 'left';
+	      } else if (collisionType === 'left') {
+	        this.direction = 'right';
+	      }
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(dt) {
+	      if (this.direction === 'left') {
+	        this.vel[0] = -CONSTANTS.ENEMY_ONE_VEL;
+	      } else if (this.direction === 'right') {
+	        this.vel[0] = CONSTANTS.ENEMY_ONE_VEL;
+	      }
+	      this.lastPos = this.pos;
+	      this.lastVel = this.vel;
+	      this.vel[1] += CONSTANTS.GRAVITY * dt;
+	      this.pos[0] += this.vel[0] * dt;
+	      this.pos[1] += this.vel[1] * dt;
+	      this.sprite.update(dt);
+	    }
+	  }]);
+	
+	  return Enemy;
+	}(_Moveable3.default);
+	
+	exports.default = Enemy;
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -915,7 +926,7 @@
 	});
 	exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
 	
-	var _Sprite = __webpack_require__(3);
+	var _Sprite = __webpack_require__(5);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
@@ -988,7 +999,7 @@
 	});
 
 /***/ },
-/* 6 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -998,7 +1009,7 @@
 	});
 	exports.STAGE_1_CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
-	var _Wall = __webpack_require__(7);
+	var _Wall = __webpack_require__(11);
 	
 	var _Wall2 = _interopRequireDefault(_Wall);
 	
@@ -1084,7 +1095,7 @@
 	};
 
 /***/ },
-/* 7 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1093,9 +1104,7 @@
 	  value: true
 	});
 	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _WallSprite = __webpack_require__(8);
+	var _WallSprite = __webpack_require__(12);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
@@ -1103,38 +1112,33 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Wall = function () {
-	  function Wall(opts) {
-	    _classCallCheck(this, Wall);
+	var Wall = function Wall(opts) {
+	  var _this = this;
 	
-	    var pos = opts.pos;
-	    var size = opts.size;
+	  _classCallCheck(this, Wall);
 	
-	    this.type = 'wall';
-	    this.size = size;
-	    this.pos = pos;
-	    this.sprite = new _WallSprite2.default(size);
+	  var pos = opts.pos;
+	  var size = opts.size;
 	
-	    this.hitbox = this.hitbox.bind(this);
-	  }
+	  this.type = 'wall';
+	  this.size = size;
+	  this.pos = pos;
+	  this.sprite = new _WallSprite2.default(size);
 	
-	  _createClass(Wall, [{
-	    key: 'hitbox',
-	    value: function hitbox() {
-	      var pos = this.pos;
-	      var size = this.size;
-	
-	      return [].concat(pos).concat(size);
-	    }
-	  }]);
-	
-	  return Wall;
-	}();
+	  this.hitbox = function () {
+	    return {
+	      x: _this.pos[0],
+	      y: _this.pos[1],
+	      w: size[0],
+	      h: size[1]
+	    };
+	  };
+	};
 	
 	exports.default = Wall;
 
 /***/ },
-/* 8 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1183,23 +1187,7 @@
 	exports.default = WallSprite;
 
 /***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
-	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
-	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
-	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
-	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
-	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 50;
-
-/***/ },
-/* 10 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1210,98 +1198,437 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _CONSTANTS = __webpack_require__(9);
+	var _Crate = __webpack_require__(3);
 	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var Crate = function () {
-	  function Crate(opts) {
-	    _classCallCheck(this, Crate);
-	
-	    var pos = opts.pos;
-	    var vel = opts.vel;
-	    var sprite = opts.sprite;
-	
-	    this.type = 'crate';
-	    this.pos = pos;
-	    this.lastPos = pos;
-	    this.vel = vel;
-	    this.sprite = sprite;
-	
-	    this.update = this.update.bind(this);
-	    this.hitbox = this.hitbox.bind(this);
-	  }
-	
-	  _createClass(Crate, [{
-	    key: 'hitbox',
-	    value: function hitbox() {
-	      var pos = this.pos;
-	      var sprite = this.sprite;
-	
-	      return [].concat(pos).concat(sprite.size);
-	    }
-	  }, {
-	    key: 'update',
-	    value: function update(dt) {
-	      this.lastPos[1] = this.pos[1];
-	      if (this.vel[1] !== 0) {
-	        this.vel[1] += _CONSTANTS.GRAVITY * dt;
-	      }
-	      this.pos[1] += this.vel[1] * dt;
-	    }
-	  }]);
-	
-	  return Crate;
-	}();
-	
-	exports.default = Crate;
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.ENEMY_1 = undefined;
-	
-	var _Enemy = __webpack_require__(12);
-	
-	var _Enemy2 = _interopRequireDefault(_Enemy);
-	
-	var _CONSTANTS = __webpack_require__(9);
-	
-	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
-	
-	var _SPRITES = __webpack_require__(5);
-	
-	var SPRITES = _interopRequireWildcard(_SPRITES);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	var _Crate2 = _interopRequireDefault(_Crate);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var multiplier = function multiplier() {
-	  if (Math.random() > 0.5) {
-	    return -1;
-	  }
-	  return 1;
-	};
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 	
-	var ENEMY_1 = exports.ENEMY_1 = function ENEMY_1() {
-	  return new _Enemy2.default({
-	    type: 'enemy',
-	    pos: [450, 0],
-	    lastPos: [450, 0],
-	    vel: [0, 0],
-	    sprite: SPRITES.PLAYER_IDLE
-	  });
-	};
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var CollisionManager = function () {
+	  function CollisionManager() {
+	    _classCallCheck(this, CollisionManager);
+	
+	    this.collisionEl = document.getElementById('collision');
+	    this.entityHitWall = this.entityHitWall.bind(this);
+	    this.typeOfCollision = this.typeOfCollision.bind(this);
+	    this.handleCollisions = this.handleCollisions.bind(this);
+	    this.handleEnemyCollisions = this.handleEnemyCollisions.bind(this);
+	    this.handleCrateCollisions = this.handleCrateCollisions.bind(this);
+	    this.handlePlayerCollisions = this.handlePlayerCollisions.bind(this);
+	  }
+	
+	  _createClass(CollisionManager, [{
+	    key: 'handleCollisions',
+	    value: function handleCollisions(objects) {
+	      var player = objects.player;
+	      var enemies = objects.enemies;
+	      var crate = objects.crate;
+	
+	      var walls = objects.stage;
+	      var handlePlayerCollisions = this.handlePlayerCollisions;
+	      var handleEnemyCollisions = this.handleEnemyCollisions;
+	      var handleCrateCollisions = this.handleCrateCollisions;
+	
+	
+	      handlePlayerCollisions(player, [].concat(_toConsumableArray(walls), _toConsumableArray(enemies), [crate]));
+	      handleEnemyCollisions(enemies, walls);
+	      handleCrateCollisions(crate, walls);
+	    }
+	  }, {
+	    key: 'handlePlayerCollisions',
+	    value: function handlePlayerCollisions(player, otherObjects) {
+	      var typeOfCollision = this.typeOfCollision;
+	      var entityHitWall = this.entityHitWall;
+	
+	      for (var i = 0; i < otherObjects.length; i++) {
+	        var otherObject = otherObjects[i];
+	        var collisionType = typeOfCollision(player, otherObject);
+	        if (otherObject.type === 'wall') {
+	          entityHitWall(player, collisionType);
+	        }
+	      }
+	    }
+	  }, {
+	    key: 'handleEnemyCollisions',
+	    value: function handleEnemyCollisions(enemies, walls) {}
+	  }, {
+	    key: 'handleCrateCollisions',
+	    value: function handleCrateCollisions(crate, walls) {}
+	  }, {
+	    key: 'entityHitWall',
+	    value: function entityHitWall(entity, collisionType) {
+	      var resetXPos = this.resetXPos;
+	      var resetYPos = this.resetYPos;
+	      var resetXVel = this.resetXVel;
+	      var nullXVel = this.nullXVel;
+	      var resetYVel = this.resetYVel;
+	      var nullYVel = this.nullYVel;
+	
+	      console.log(collisionType);
+	      this.collisionEl.innerHTML = collisionType;
+	      switch (collisionType) {
+	        case 'bottom':
+	          resetYPos(entity);
+	          nullYVel(entity);
+	          break;
+	        case 'top':
+	          resetYPos(entity);
+	          nullYVel(entity);
+	          break;
+	        case 'left':
+	          resetXPos(entity);
+	        case 'right':
+	          resetXPos(entity);
+	          break;
+	        case 'left-top':
+	          resetXPos(entity, 3);
+	          resetXVel(entity);
+	          resetYPos(entity);
+	          break;
+	        case 'right-top':
+	          resetXPos(entity, -3);
+	          resetXVel(entity);
+	          resetYPos(entity);
+	          break;
+	
+	        case 'left-bottom':
+	          resetXPos(entity, 5);
+	          resetYPos(entity);
+	          resetYVel(entity);
+	          break;
+	
+	        case 'right-bottom':
+	          resetXPos(entity, -5);
+	          resetYPos(entity);
+	          resetYVel(entity);
+	          break;
+	
+	        case 'top-bottom':
+	          resetXPos(entity);
+	          break;
+	        default:
+	          break;
+	      }
+	    }
+	  }, {
+	    key: 'resetXPos',
+	    value: function resetXPos(entity) {
+	      var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	
+	      entity.pos[0] = entity.lastPos[0] + offset;
+	    }
+	  }, {
+	    key: 'resetYPos',
+	    value: function resetYPos(entity) {
+	      var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	
+	      entity.pos[1] = entity.lastPos[1] + offset;
+	    }
+	  }, {
+	    key: 'resetXVel',
+	    value: function resetXVel(entity) {
+	      var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	
+	      entity.vel[0] = entity.lastVel[0] + offset;
+	    }
+	  }, {
+	    key: 'nullXVel',
+	    value: function nullXVel(entity) {
+	      entity.vel[0] = 0;
+	    }
+	  }, {
+	    key: 'resetYVel',
+	    value: function resetYVel(entity) {
+	      var offset = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	
+	      entity.vel[1] = entity.lastVel[1] + offset;
+	    }
+	  }, {
+	    key: 'nullYVel',
+	    value: function nullYVel(entity) {
+	      entity.vel[1] = 0;
+	    }
+	  }, {
+	    key: 'typeOfCollision',
+	    value: function typeOfCollision(obj1, obj2) {
+	      var collisionExists = this.collisionExists;
+	
+	      var rect1 = obj1.hitbox();
+	      var rect2 = obj2.hitbox();
+	
+	      if (collisionExists(rect1, rect2)) {
+	        var _collisionRight = this._collisionRight;
+	        var _collisionLeft = this._collisionLeft;
+	        var _collisionTop = this._collisionTop;
+	        var _collisionBottom = this._collisionBottom;
+	
+	
+	        var l = _collisionLeft(rect1, rect2);
+	        var r = _collisionRight(rect1, rect2);
+	        var t = _collisionTop(rect1, rect2);
+	        var b = _collisionBottom(rect1, rect2);
+	
+	        if (t && b) {
+	          return 'top-bottom';
+	        } else if (l && t) {
+	          return 'left-top';
+	        } else if (l && b) {
+	          return 'left-bottom';
+	        } else if (r && t) {
+	          return 'right-top';
+	        } else if (r && b) {
+	          return 'right-bottom';
+	        } else if (l) {
+	          return 'left';
+	        } else if (r) {
+	          return 'right';
+	        } else if (t) {
+	          return 'top';
+	        } else if (b) {
+	          return 'bottom';
+	        } else {
+	          return null;
+	        }
+	      } else {
+	        return null;
+	      }
+	    }
+	  }, {
+	    key: 'collisionExists',
+	    value: function collisionExists(rect1, rect2) {
+	      return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x && rect1.y < rect2.y + rect2.h && rect1.h + rect1.y > rect2.y;
+	    }
+	
+	    // private
+	
+	  }, {
+	    key: '_collisionRight',
+	    value: function _collisionRight(rect1, rect2) {
+	      // const leftSideOf1 = rect1.x;
+	      // const rightSideOf1 = rect1.x + rect1.width;
+	      // const leftSideOf2 = rect2.x;
+	      // const rightSideOf2 = rect2.x + rect2.width;
+	      return rect1.x + rect1.w > rect2.x && rect1.x < rect2.x;
+	    }
+	  }, {
+	    key: '_collisionLeft',
+	    value: function _collisionLeft(rect1, rect2) {
+	      // const leftSideOf1 = rect1.x;
+	      // const rightSideOf1 = rect1.x + rect1.width;
+	      // const leftSideOf2 = rect2.x;
+	      // const rightSideOf2 = rect2.x + rect2.width;
+	      return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x + rect2.w;
+	    }
+	  }, {
+	    key: '_collisionTop',
+	    value: function _collisionTop(rect1, rect2) {
+	      // const topSideOf1 = rect1.y;
+	      // const bottomSideOf1 = rect1.y + rect1.height;
+	      // const topSideOf2 = rect2.y;
+	      // const bottomSideOf2 = rect2.y + rect2.height;
+	      return rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y + rect2.h;
+	    }
+	  }, {
+	    key: '_collisionBottom',
+	    value: function _collisionBottom(rect1, rect2) {
+	      // const topSideOf1 = rect1.y;
+	      // const bottomSideOf1 = rect1.y + rect1.height;
+	      // const topSideOf2 = rect2.y;
+	      // const bottomSideOf2 = rect2.y + rect2.height;
+	      return rect1.y + rect1.h > rect2.y && rect1.y < rect2.y;
+	    }
+	
+	    //   const rect1 = this._getRect(entity);
+	    //   for (let i = 0; i < collisionMap.length; i++) {
+	    //     const otherEntity = collisionMap[i];
+	    //     const rect2 = this._getRect(otherEntity);
+	    //
+	    //     const collisionType = this._collisionDetected(rect1, rect2);
+	    //     if (collisionType) {
+	    //       if (entity.type === 'enemy') {
+	    //         entity.handleCollision(collisionType);
+	    //       }
+	    //
+	    //       if (otherEntity.type === 'wall') {
+	    //         this._entityHitWall(entity, collisionType);
+	    //       }
+	    //
+	    //       if (entity.type === 'player' && otherEntity.type === 'crate') {
+	    //         this.score++;
+	    //         if (this.score > 9) {
+	    //           this.scoreEl.className = 'double_digits';
+	    //         }
+	    //         this.crate = new Crate({
+	    //           pos: [-100, -100],
+	    //           vel: [0, 0],
+	    //           sprite: SPRITES.CRATE
+	    //         });
+	    //         setTimeout(() => {
+	    //             this.crate = new Crate({
+	    //             pos: STAGES.STAGE_1_CRATE_SPAWN(),
+	    //             vel: [0, 10],
+	    //             sprite: SPRITES.CRATE
+	    //           });
+	    //         }, 500);
+	    //       }
+	    //
+	    //     }
+	    //   }
+	    //   return null;
+	    // }
+	    //
+	    //
+	    // getRect(entity) {
+	    //   const hitbox = entity.hitbox(this.ctx);
+	    //
+	    //   return {
+	    //     x: hitbox[0], y: hitbox[1], width: hitbox[2], height: hitbox[3]
+	    //   };
+	    // }
+	    //
+	    // collisionDetected(rect1, rect2) {
+	    //   const {
+	    //     _collisionRight,
+	    //     _collisionLeft,
+	    //     _collisionTop,
+	    //     _collisionBottom
+	    //   } = this;
+	    //
+	    //   if (rect1.x < rect2.x + rect2.width &&
+	    //       rect1.x + rect1.width > rect2.x &&
+	    //       rect1.y < rect2.y + rect2.height &&
+	    //       rect1.height + rect1.y > rect2.y) {
+	    //         const l = _collisionLeft(rect1, rect2);
+	    //         const r = _collisionRight(rect1, rect2);
+	    //         const t = _collisionTop(rect1, rect2);
+	    //         const b = _collisionBottom(rect1, rect2);
+	    //
+	    //         if ( t && b ) {
+	    //           return 'top-bottom';
+	    //         } else if (l && t) {
+	    //           return 'left-top';
+	    //         } else if (l && b ) {
+	    //           return 'left-bottom';
+	    //         } else if (r && t) {
+	    //           return 'right-top';
+	    //         } else if (r && b) {
+	    //           return 'right-bottom';
+	    //         } else if (l) {
+	    //           return 'left';
+	    //         } else if (r) {
+	    //           return 'right';
+	    //         } else if (t) {
+	    //           return 'top';
+	    //         } else if (b) {
+	    //           return 'bottom';
+	    //         }
+	    //
+	    //   }
+	    // }
+	    //
+	
+	    //
+	    // _entityHitWall(entity, collisionType) {
+	    //   if (entity.type === 'player') {
+	    //     this.collisionEl.innerHTML = `C: ${collisionType}`;
+	    //   }
+	    //   switch(collisionType) {
+	    //     case 'right':
+	    //       entity.vel[0] = 0;
+	    //       entity.pos[0] = entity.lastPos[0];
+	    //       break;
+	    //     case 'left':
+	    //       entity.vel[0] = 0;
+	    //       entity.pos[0] = entity.lastPos[0];
+	    //       break;
+	    //     case 'top':
+	    //       entity.vel[1] = -entity.vel[1] * 0.25;
+	    //       entity.pos[1] = entity.lastPos[1];
+	    //       break;
+	    //     case 'bottom':
+	    //       entity.vel[1] = 0;
+	    //       entity.pos[1] = entity.lastPos[1];
+	    //       break;
+	    //     case 'right-bottom':
+	    //       if (entity.pos[0] > entity.lastPos[0]) {
+	    //         entity.pos[0] = entity.lastPos[0];
+	    //       }
+	    //       if (entity.vel[0] === 0 && entity.vel[1] > 0) {
+	    //         entity.pos[0] = entity.lastPos[0];
+	    //       }
+	    //       if (entity.pos[1] > entity.lastPos[1] &&
+	    //          entity.vel[0] === 0) {
+	    //         entity.pos[1] = entity.lastPos[1];
+	    //         entity.vel[1] = 0;
+	    //       }
+	    //       if (entity.pos[1] > entity.lastPos[1] &&
+	    //          entity.vel[1] > 0) {
+	    //         entity.pos[1] = entity.lastPos[1] + 3;
+	    //         entity.vel[1] = -entity.vel[1] * 0.25;
+	    //       }
+	    //       break;
+	    //     case 'left-bottom':
+	    //       if (entity.pos[0] < entity.lastPos[0]) {
+	    //         entity.pos[0] = entity.lastPos[0];
+	    //       }
+	    //       if (entity.vel[0] === 0 && entity.vel[1] > 0) {
+	    //         entity.pos[0] = entity.lastPos[0];
+	    //       }
+	    //       if (entity.pos[1] > entity.lastPos[1] &&
+	    //          entity.vel[0] === 0) {
+	    //         entity.pos[1] = entity.lastPos[1];
+	    //         entity.vel[1] = 0;
+	    //       }
+	    //       if (entity.pos[1] > entity.lastPos[1] &&
+	    //          entity.vel[1] < 0) {
+	    //         entity.pos[1] = entity.lastPos[1] + 3;
+	    //         entity.vel[1] = -entity.vel[1] * 0.25;
+	    //       }
+	    //       break;
+	    //     case 'right-top':
+	    //       if (entity.vel[0] > 0) {
+	    //         entity.vel[0] = 0;
+	    //       }
+	    //       if (entity.pos[0] > entity.lastPos[0]) {
+	    //         entity.pos[0] = entity.lastPos[0];
+	    //       }
+	    //       if (entity.vel[1] < 0) {
+	    //         entity.pos[1] = entity.lastPos[1];
+	    //         entity.vel[1] = -entity.vel[1] * 0.25;
+	    //       }
+	    //       break;
+	    //     case 'left-top':
+	    //       if (entity.vel[0] < 0) {
+	    //         entity.vel[0] = 0;
+	    //       }
+	    //       if (entity.pos[0] < entity.lastPos[0]) {
+	    //         entity.pos[0] = entity.lastPos[0];
+	    //       }
+	    //       if (entity.vel[1] < 0) {
+	    //         entity.pos[1] = entity.lastPos[1];
+	    //         entity.vel[1] = -entity.vel[1] * 0.25;
+	    //       }
+	    //       break;
+	    //     case 'top-bottom':
+	    //       entity.pos[0] = entity.lastPos[0];
+	    //       break;
+	    //   }
+	    // }
+	
+	  }]);
+	
+	  return CollisionManager;
+	}();
+	
+	exports.default = CollisionManager;
 
 /***/ },
-/* 12 */
+/* 14 */,
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1312,7 +1639,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _CONSTANTS = __webpack_require__(9);
+	var _CONSTANTS = __webpack_require__(4);
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
@@ -1320,49 +1647,43 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Enemy = function () {
-	  function Enemy(opts) {
-	    _classCallCheck(this, Enemy);
+	var Moveable = function () {
+	  function Moveable(opts) {
+	    _classCallCheck(this, Moveable);
 	
-	    var type = opts.type;
 	    var pos = opts.pos;
-	    var vel = opts.vel;
-	    var sprite = opts.sprite;
 	    var lastPos = opts.lastPos;
+	    var vel = opts.vel;
+	    var lastVel = opts.lastVel;
+	    var sprite = opts.sprite;
 	
-	    this.type = type;
 	    this.pos = pos;
-	    this.lastPos = lastPos;
+	    this.lastPos = [0, 0];
 	    this.vel = vel;
+	    this.lastVel = [0, 0];
 	    this.sprite = sprite;
 	
-	    this.hitbox = this.hitbox.bind(this);
 	    this.update = this.update.bind(this);
 	  }
 	
-	  _createClass(Enemy, [{
-	    key: 'hitbox',
-	    value: function hitbox() {
-	      var pos = this.pos;
-	      var sprite = this.sprite;
-	
-	      return [pos[0] + 20, pos[1] + 15, 27, 49];
-	    }
-	  }, {
+	  _createClass(Moveable, [{
 	    key: 'update',
 	    value: function update(dt) {
 	      this.lastPos[0] = this.pos[0];
 	      this.lastPos[1] = this.pos[1];
+	      this.lastVel[0] = this.vel[0];
+	      this.lastVel[1] = this.vel[1];
 	      this.vel[1] += CONSTANTS.GRAVITY * dt;
 	      this.pos[0] += this.vel[0] * dt;
 	      this.pos[1] += this.vel[1] * dt;
+	      this.sprite.update(dt);
 	    }
 	  }]);
 	
-	  return Enemy;
+	  return Moveable;
 	}();
 	
-	exports.default = Enemy;
+	exports.default = Moveable;
 
 /***/ }
 /******/ ]);
