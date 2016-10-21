@@ -104,6 +104,7 @@
 	    this.render = this.render.bind(this);
 	    this.setup = this.setup.bind(this);
 	    this.reset = this.reset.bind(this);
+	    this.addEnemy = this.addEnemy.bind(this);
 	    this.resetCrate = this.resetCrate.bind(this);
 	    this.renderHtml = this.renderHtml.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
@@ -117,6 +118,7 @@
 	    key: 'play',
 	    value: function play() {
 	      this.lastTime = Date.now();
+	      this.lastEnemySpawnTime = Date.now();
 	      this.setup();
 	    }
 	  }, {
@@ -126,10 +128,15 @@
 	        this.reset();
 	        return;
 	      }
+	
 	      var update = this.update;
 	      var render = this.render;
 	
 	      var now = Date.now();
+	
+	      // if ((this.lastEnemySpawnTime - now) > CONSTANTS.ENEMY_SPAWN_RATE) {
+	      // this.addEnemy();
+	      // }
 	      var dt = (now - this.lastTime) / 1000.0;
 	
 	      update(dt);
@@ -214,10 +221,6 @@
 	        pos: [400, 0],
 	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
 	        sprite: SPRITES.HAMMER_RUN_RIGHT
-	      }), new _Enemy2.default({
-	        pos: [400, 0],
-	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	        sprite: SPRITES.HAMMER_RUN_RIGHT
 	      })];
 	
 	      this.crate = new _Crate2.default({
@@ -261,10 +264,6 @@
 	      });
 	
 	      this.enemies = [new _Enemy2.default({
-	        pos: [400, 0],
-	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	        sprite: SPRITES.HAMMER_RUN_RIGHT
-	      }), new _Enemy2.default({
 	        pos: [400, 0],
 	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
 	        sprite: SPRITES.HAMMER_RUN_RIGHT
@@ -336,6 +335,16 @@
 	      var stage = this.stage;
 	
 	      return { player: player, enemies: enemies, crate: crate, stage: stage };
+	    }
+	  }, {
+	    key: 'addEnemy',
+	    value: function addEnemy() {
+	      this.lastEnemySpawnTime = Date.now();
+	      this.enemies.push(new _Enemy2.default({
+	        pos: [400, 0],
+	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	        sprite: SPRITES.HAMMER_RUN_RIGHT
+	      }));
 	    }
 	  }]);
 	
@@ -639,8 +648,9 @@
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
 	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
-	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 200;
-	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -350;
+	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
+	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 0;
 
 /***/ },
 /* 5 */
@@ -1009,6 +1019,10 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
+	var _SPRITES = __webpack_require__(5);
+	
+	var SPRITES = _interopRequireWildcard(_SPRITES);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -1028,7 +1042,7 @@
 	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
 	
 	    _this.type = 'enemy';
-	    _this.speed = CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
+	    _this.speed = _this.randomSpeed();
 	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
 	
 	    _this.hitbox = function () {
@@ -1046,6 +1060,11 @@
 	  }
 	
 	  _createClass(Enemy, [{
+	    key: 'randomSpeed',
+	    value: function randomSpeed() {
+	      return CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
+	    }
+	  }, {
 	    key: 'handleCollision',
 	    value: function handleCollision(collisionType) {
 	      if (collisionType === 'right') {
@@ -1059,12 +1078,15 @@
 	    value: function update(dt) {
 	      if (this.direction === 'left') {
 	        this.vel[0] = -this.speed;
+	        this.sprite = SPRITES.HAMMER_RUN_RIGHT; // facing wrong way in sprite sheet
 	      } else if (this.direction === 'right') {
 	        this.vel[0] = this.speed;
+	        this.sprite = SPRITES.HAMMER_RUN_LEFT; // facing wrong way in sprite sheet
 	      }
 	      if (this.pos[0] > 900 || this.pos[1] > 600) {
 	        this.pos[0] = 400;
 	        this.pos[1] = 0;
+	        this.speed = this.randomSpeed();
 	      }
 	
 	      this.lastPos[0] = this.pos[0];
@@ -1072,7 +1094,7 @@
 	      this.lastVel[0] = this.vel[0];
 	      this.lastVel[1] = this.vel[1];
 	
-	      this.vel[1] += Math.random() > 0.99 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
+	      this.vel[1] += Math.random() > 0.9999 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
 	      this.vel[1] += CONSTANTS.GRAVITY * dt;
 	      this.pos[0] += this.vel[0] * dt;
 	      this.pos[1] += this.vel[1] * dt;
@@ -1416,12 +1438,12 @@
 	          resetXPos(entity);
 	          break;
 	        case 'left-top':
-	          resetXPos(entity, 3);
+	          resetXPos(entity, 1);
 	          resetXVel(entity);
 	          resetYPos(entity);
 	          break;
 	        case 'right-top':
-	          resetXPos(entity, -3);
+	          resetXPos(entity, -1);
 	          resetXVel(entity);
 	          resetYPos(entity);
 	          break;
