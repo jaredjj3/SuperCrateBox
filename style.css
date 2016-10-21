@@ -15,7 +15,7 @@
 .single_digits {
   position: absolute;
   font-size: 72px;
-  color: black;
+  color: yellow;
   top: -30px;
   left: 445px;
 }
@@ -23,7 +23,11 @@
 .double_digits {
   position: absolute;
   font-size: 72px;
-  color: green;
+  color: orange;
   top: -30px;
   left: 430px;
+}
+
+#canvas {
+  background: url("./lib/img/background.gif");
 }

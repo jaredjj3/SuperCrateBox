@@ -105,6 +105,7 @@
 	    this.setup = this.setup.bind(this);
 	    this.reset = this.reset.bind(this);
 	    this.addEnemy = this.addEnemy.bind(this);
+	    this.removeEnemy = this.removeEnemy.bind(this);
 	    this.resetCrate = this.resetCrate.bind(this);
 	    this.renderHtml = this.renderHtml.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
@@ -217,9 +218,7 @@
 	        sprites: {
 	          idle: SPRITES.PLAYER_IDLE(),
 	          runRight: SPRITES.PLAYER_RUN_RIGHT(),
-	          runLeft: SPRITES.PLAYER_RUN_LEFT(),
-	          floatRight: SPRITES.PLAYER_FLOAT_RIGHT(),
-	          floatLeft: SPRITES.PLAYER_FLOAT_LEFT()
+	          runLeft: SPRITES.PLAYER_RUN_LEFT()
 	        },
 	        sprite: SPRITES.PLAYER_IDLE()
 	      });
@@ -243,7 +242,7 @@
 	      this.gameOver = false;
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png']);
+	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png']);
 	      var init = function init() {
 	        _this2.main();
 	      };
@@ -268,14 +267,13 @@
 	        sprites: {
 	          idle: SPRITES.PLAYER_IDLE(),
 	          runRight: SPRITES.PLAYER_RUN_RIGHT(),
-	          runLeft: SPRITES.PLAYER_RUN_LEFT(),
-	          floatRight: SPRITES.PLAYER_FLOAT_RIGHT(),
-	          floatLeft: SPRITES.PLAYER_FLOAT_LEFT()
+	          runLeft: SPRITES.PLAYER_RUN_LEFT()
 	        },
 	        sprite: SPRITES.PLAYER_IDLE()
 	      });
 	
 	      this.enemies = [];
+	      this.currentEnemyId = 0;
 	
 	      this.crate = new _Crate2.default({
 	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
@@ -349,7 +347,9 @@
 	    key: 'addEnemy',
 	    value: function addEnemy() {
 	      this.lastEnemySpawnTime = Date.now();
+	      this.currentEnemyId++;
 	      this.enemies.push(new _Enemy2.default({
+	        id: this.currentEnemyId,
 	        pos: [400, 0],
 	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
 	        sprites: {
@@ -358,6 +358,17 @@
 	        },
 	        sprite: SPRITES.HAMMER_RUN_LEFT()
 	      }));
+	    }
+	  }, {
+	    key: 'removeEnemy',
+	    value: function removeEnemy(targetId) {
+	      for (var i = 0; i < this.enemies.length; i++) {
+	        var enemy = this.enemies[i];
+	        if (enemy.id === targetId) {
+	          this.enemies.splice(i, 1);
+	          return;
+	        }
+	      }
 	    }
 	  }]);
 	
@@ -522,8 +533,8 @@
 	
 	    _this.type = 'player';
 	    _this.jumpNumber = 0;
-	    _this.isInAir = false;
-	    _this.lastJumpTime = 0;
+	    _this.jumpKeyPressed = false;
+	    _this.lastJumpTime = Date.now();
 	
 	    _this.hitbox = function () {
 	      return {
@@ -534,26 +545,72 @@
 	      };
 	    };
 	
+	    _this.setSprite = _this.setSprite.bind(_this);
 	    _this.handleInput = _this.handleInput.bind(_this);
+	    _this.handleSurfaceCollison = _this.handleSurfaceCollison.bind(_this);
+	    _this.handleEnemyCollision = _this.handleEnemyCollision.bind(_this);
 	    _this.handleJumpKeyPress = _this.handleJumpKeyPress.bind(_this);
-	    _this.handleCollision = _this.handleCollision.bind(_this);
+	    _this.handleJumpKeyRelease = _this.handleJumpKeyRelease.bind(_this);
 	    return _this;
 	  }
 	
 	  _createClass(Player, [{
-	    key: 'handleCollision',
-	    value: function handleCollision(collisionType) {
-	      if (!collisionType) {}
+	    key: 'setSprite',
+	    value: function setSprite() {
+	      var vel = this.vel;
+	      var sprites = this.sprites;
+	      var isFloating = this.isFloating;
+	
+	      var vx = vel[0];
+	      var vy = vel[1];
+	
+	      if (vx > 0) {
+	        this.sprite = sprites.runRight;
+	      } else if (vx < 0) {
+	        this.sprite = sprites.runLeft;
+	      } else {
+	        this.sprite = sprites.idle;
+	      }
+	    }
+	  }, {
+	    key: 'handleEnemyCollision',
+	    value: function handleEnemyCollision(collisionType, enemy, game) {
+	      switch (collisionType) {
+	        case 'bottom':
+	          game.removeEnemy(enemy.id);
+	          break;
+	        case 'left-bottom':
+	          game.removeEnemy(enemy.id);
+	          break;
+	        case 'right-bottom':
+	          game.removeEnemy(enemy.id);
+	          break;
+	        default:
+	          game.reset();
+	          break;
+	      }
+	    }
+	  }, {
+	    key: 'handleSurfaceCollison',
+	    value: function handleSurfaceCollison(collisionType) {
+	      if (collisionType === 'bottom') {
+	        this.jumpNumber = 0;
+	      }
 	    }
 	  }, {
 	    key: 'handleJumpKeyPress',
 	    value: function handleJumpKeyPress() {
-	      this.jumpNumber++;
-	      this.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
+	      if (this.jumpNumber < 2 && !this.jumpKeyPressed) {
+	        this.jumpNumber++;
+	        this.vel[1] = CONSTANTS.PLAYER_VERTICAL_INIT_VEL;
+	      }
+	      this.jumpKeyPressed = true;
 	    }
 	  }, {
 	    key: 'handleJumpKeyRelease',
-	    value: function handleJumpKeyRelease() {}
+	    value: function handleJumpKeyRelease() {
+	      this.jumpKeyPressed = false;
+	    }
 	  }, {
 	    key: 'handleInput',
 	    value: function handleInput(dt) {
@@ -590,13 +647,7 @@
 	        this.vel[0] = 0;
 	      }
 	
-	      if (vel[0] > 0) {
-	        this.sprite = sprites.runRight;
-	      } else if (vel[0] < 0) {
-	        this.sprite = sprites.runLeft;
-	      } else {
-	        this.sprite = sprites.idle;
-	      }
+	      this.setSprite();
 	    }
 	  }]);
 	
@@ -676,12 +727,12 @@
 	});
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
 	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
-	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -500;
+	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -600;
 	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
 	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // scales with number of crates collected
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // every n millisecs
 
 /***/ },
 /* 5 */
@@ -743,9 +794,9 @@
 	  return new _Sprite2.default({
 	    url: './lib/img/jay.png',
 	    pos: [0, 0],
-	    frames: [5, 6, 7, 8, 9, 8, 7, 6],
+	    frames: [12],
 	    size: [64, 64],
-	    speed: 18,
+	    speed: 1,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
@@ -756,9 +807,9 @@
 	  return new _Sprite2.default({
 	    url: './lib/img/jay.png',
 	    pos: [0, 0],
-	    frames: [6, 7, 8, 9, 8, 7, 6, 5],
+	    frames: [12],
 	    size: [64, 64],
-	    speed: 18,
+	    speed: 1,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'left'
@@ -1116,6 +1167,7 @@
 	    _this.type = 'enemy';
 	    _this.speed = _this.randomSpeed();
 	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
+	    _this.id = opts.id;
 	
 	    _this.hitbox = function () {
 	      return {
@@ -1353,13 +1405,10 @@
 	    key: 'render',
 	    value: function render(ctx) {
 	      var size = this.size;
-	      // const pattern = ctx.createPattern(
-	      //   Resources.get('./lib/img/brick.png'),
-	      //   'repeat'
-	      // );
-	      // ctx.fillStyle = pattern;
 	
-	      ctx.fillStyle = 'black';
+	      var pattern = ctx.createPattern(_Resources2.default.get('./lib/img/metal.png'), 'repeat');
+	      ctx.fillStyle = pattern;
+	      // ctx.fillStyle = 'black';
 	      ctx.fillRect(0, 0, size[0], size[1]);
 	      // ctx.strokeStyle = 'red';
 	      // ctx.strokeRect(0, 0, size[0], size[1]);
@@ -1436,6 +1485,7 @@
 	      var game = this.game;
 	      var typeOfCollision = this.typeOfCollision;
 	      var entityHitWall = this.entityHitWall;
+	      var isPlayerFloating = this.isPlayerFloating;
 	      var playerPickedUpCrate = this.playerPickedUpCrate;
 	
 	      for (var i = 0; i < otherObjects.length; i++) {
@@ -1444,6 +1494,7 @@
 	        if (collisionType) {
 	          switch (otherObject.type) {
 	            case 'wall':
+	              player.handleSurfaceCollison(collisionType);
 	              entityHitWall(player, collisionType);
 	              break;
 	            case 'crate':
@@ -1451,7 +1502,7 @@
 	              game.resetCrate();
 	              break;
 	            case 'enemy':
-	              game.reset();
+	              player.handleEnemyCollision(collisionType, otherObject, game);
 	              break;
 	            default:
 	              return;
@@ -1520,12 +1571,12 @@
 	          resetXPos(entity);
 	          break;
 	        case 'left-top':
-	          resetXPos(entity, 1);
+	          resetXPos(entity, 3);
 	          resetXVel(entity);
 	          resetYPos(entity);
 	          break;
 	        case 'right-top':
-	          resetXPos(entity, -1);
+	          resetXPos(entity, -3);
 	          resetXVel(entity);
 	          resetYPos(entity);
 	          break;
