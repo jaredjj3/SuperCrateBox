@@ -56,7 +56,7 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
-	var _Crate = __webpack_require__(7);
+	var _Crate = __webpack_require__(12);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -64,15 +64,15 @@
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
-	var _Input = __webpack_require__(8);
+	var _Input = __webpack_require__(15);
 	
 	var _Input2 = _interopRequireDefault(_Input);
 	
-	var _Enemy = __webpack_require__(9);
+	var _Enemy = __webpack_require__(13);
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
-	var _UNITS = __webpack_require__(10);
+	var _UNITS = __webpack_require__(7);
 	
 	var UNITS = _interopRequireWildcard(_UNITS);
 	
@@ -80,7 +80,7 @@
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(11);
+	var _STAGES = __webpack_require__(8);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -88,7 +88,7 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _CollisionManager = __webpack_require__(15);
+	var _CollisionManager = __webpack_require__(16);
 	
 	var _CollisionManager2 = _interopRequireDefault(_CollisionManager);
 	
@@ -115,11 +115,13 @@
 	    this.allObjects = this.allObjects.bind(this);
 	    this.addPowerup = this.addPowerup.bind(this);
 	    this.removeEnemy = this.removeEnemy.bind(this);
+	    this.removeShield = this.removeShield.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
 	    this.updateEntities = this.updateEntities.bind(this);
+	    this.killAllEnemies = this.killAllEnemies.bind(this);
 	    this.checkPlayerBounds = this.checkPlayerBounds.bind(this);
-	    this.removeShield = this.removeShield.bind(this);
+	    this.removeElectricShield = this.removeElectricShield.bind(this);
 	  }
 	
 	  _createClass(SuperCrateBox, [{
@@ -133,11 +135,13 @@
 	  }, {
 	    key: 'main',
 	    value: function main() {
-	      if (this.gameOver) {
+	      if (this.gameOver & !this.isResetting) {
 	        this.reset();
+	        console.log('reset');
 	        return;
 	      }
 	
+	      var reset = this.reset;
 	      var update = this.update;
 	      var render = this.render;
 	
@@ -157,7 +161,7 @@
 	      render();
 	
 	      this.lastTime = now;
-	      requestAnimationFrame(this.main);
+	      window.mainLoop = requestAnimationFrame(this.main);
 	    }
 	  }, {
 	    key: 'update',
@@ -188,6 +192,7 @@
 	      var stage = this.stage;
 	      var shields = this.shields;
 	      var powerups = this.powerups;
+	      var electricShields = this.electricShields;
 	      var renderEntity = this.renderEntity;
 	      var renderEntities = this.renderEntities;
 	      var renderHtml = this.renderHtml;
@@ -195,12 +200,13 @@
 	
 	      renderHtml();
 	      ctx.clearRect(0, 0, 900, 600);
+	      renderEntities(stage);
 	      renderEntities(enemies);
 	      renderEntity(player);
 	      renderEntity(crate);
-	      renderEntities(stage);
 	      renderEntities(powerups);
 	      renderEntities(shields);
+	      renderEntities(electricShields);
 	    }
 	
 	    // private
@@ -219,31 +225,40 @@
 	  }, {
 	    key: 'reset',
 	    value: function reset() {
-	      this.gameOver = false;
-	      this.score = 0;
-	      this.scoreEl.className = 'single_digits';
+	      var _this2 = this;
 	
-	      this.player = (0, _UNITS.PLAYER)();
-	      this.currentObjectId = 0;
-	      this.enemies = [];
+	      this.isResetting = true;
 	      this.shields = [];
-	      this.crate = (0, _UNITS.CRATE)();
-	      this.powerups = [];
-	      this.stage = STAGES.STAGE_1;
+	      this.electricShields = [];
+	      this.lastEnemySpawnTime = Date.now();
+	      this.lastPowerupSpawnTime = Date.now();
+	
+	      setTimeout(function () {
+	        _this2.score = 0;
+	        _this2.scoreEl.className = 'single_digits';
+	        _this2.killAllEnemies();
+	        _this2.player = (0, _UNITS.PLAYER)();
+	        _this2.resetCrate();
+	        _this2.powerups = [];
+	        _this2.lastEnemySpawnTime = Date.now();
+	        _this2.lastPowerupSpawnTime = Date.now();
+	        _this2.isResetting = false;
+	        _this2.gameOver = false;
+	      }, 2000);
 	
 	      this.main();
 	    }
 	  }, {
 	    key: 'setup',
 	    value: function setup() {
-	      var _this2 = this;
+	      var _this3 = this;
 	
 	      this.gameOver = false;
-	
+	      this.isResetting = false;
 	      // loads resources
 	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png', './lib/img/shield.png']);
 	      var init = function init() {
-	        _this2.main();
+	        _this3.main();
 	      };
 	      _Resources2.default.onReady(init);
 	      _Input2.default.setup();
@@ -262,6 +277,7 @@
 	      this.currentObjectId = 0;
 	      this.enemies = [];
 	      this.shields = [];
+	      this.electricShields = [];
 	      this.crate = (0, _UNITS.CRATE)();
 	      this.powerups = [];
 	      this.stage = STAGES.STAGE_1;
@@ -274,7 +290,7 @@
 	      for (var i = 0; i < this.enemies.length; i++) {
 	        var enemy = this.enemies[i];
 	        enemy.update(dt, this);
-	        if (enemy.isDead && enemy.pos[1] > 600) {
+	        if (enemy.isDead && (enemy.pos[1] > 600 || enemy.pos[1] < -10)) {
 	          enemy.update(dt, this);
 	          this.removeEnemy(enemy.id);
 	        }
@@ -284,15 +300,20 @@
 	        this.powerups[_i].update(dt);
 	      }
 	
-	      for (var _i2 = 0; _i2 < this.shields.length; _i2++) {
-	        this.shields[_i2].update(dt);
+	      for (var _i2 = 0; _i2 < this.electricShields.length; _i2++) {
+	        this.electricShields[_i2].update(dt);
+	      }
+	
+	      for (var _i3 = 0; _i3 < this.shields.length; _i3++) {
+	        this.shields[_i3].update(dt);
 	      }
 	    }
 	  }, {
 	    key: 'checkPlayerBounds',
 	    value: function checkPlayerBounds() {
-	      if (this.player.pos[1] > 570) {
+	      if (this.player.pos[1] > 700 && this.gameOver === false) {
 	        this.gameOver = true;
+	        this.player.kill();
 	      }
 	    }
 	  }, {
@@ -375,21 +396,17 @@
 	    key: 'addElectricShield',
 	    value: function addElectricShield() {
 	      this.currentObjectId++;
-	      this.shields.push(UNITS.ELECTRIC_SHIELD(this.currentObjectId, this.player));
+	      this.electricShields.push(UNITS.ELECTRIC_SHIELD(this.currentObjectId, this.player));
 	    }
 	  }, {
-	    key: 'removeObject',
-	    value: function removeObject(targetId) {}
-	  }, {
 	    key: 'removeShield',
-	    value: function removeShield(type) {
-	      for (var i = 0; i < this.shields.length; i++) {
-	        var shield = this.shields[i];
-	        if (shield.type === type) {
-	          this.shields.splice(i, 1);
-	          return;
-	        }
-	      }
+	    value: function removeShield() {
+	      this.shields.splice(0, 1);
+	    }
+	  }, {
+	    key: 'removeElectricShield',
+	    value: function removeElectricShield() {
+	      this.electricShields.splice(0, 1);
 	    }
 	  }, {
 	    key: 'removeEnemy',
@@ -400,6 +417,13 @@
 	          this.enemies.splice(i, 1);
 	          return;
 	        }
+	      }
+	    }
+	  }, {
+	    key: 'killAllEnemies',
+	    value: function killAllEnemies() {
+	      for (var i = 0; i < this.enemies.length; i++) {
+	        this.enemies[i].kill();
 	      }
 	    }
 	  }, {
@@ -556,7 +580,7 @@
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _UNITS = __webpack_require__(10);
+	var _UNITS = __webpack_require__(7);
 	
 	var UNITS = _interopRequireWildcard(_UNITS);
 	
@@ -586,6 +610,7 @@
 	    _this.shieldHitPoints = 0;
 	    _this.electricShieldHitPoints = 0;
 	    _this.lastHit = Date.now();
+	    _this.isDead = false;
 	
 	    _this.hitbox = function () {
 	      return {
@@ -606,6 +631,16 @@
 	  }
 	
 	  _createClass(Player, [{
+	    key: 'kill',
+	    value: function kill() {
+	      this.isDead = true;
+	      this.vel[1] += -200;
+	      this.sprites.idleRight.facing = 'rightFlipped';
+	      this.sprites.idleLeft.facing = 'leftFlipped';
+	      this.sprites.runRight.facing = 'rightFlipped';
+	      this.sprites.runLeft.facing = 'leftFlipped';
+	    }
+	  }, {
 	    key: 'setSprite',
 	    value: function setSprite() {
 	      var vel = this.vel;
@@ -640,10 +675,9 @@
 	          game.addElectricShield();
 	          break;
 	        case 'nuke':
-	          var halfEnemies = Math.floor(game.enemies.length / 2);
-	          var numberToRemove = halfEnemies === 0 ? 1 : halfEnemies;
-	          for (var i = 0; i < halfEnemies; i++) {
-	            game.enemies[i].isDead = true;
+	          var numberToRemove = Math.floor(game.enemies.length * 0.75);
+	          for (var i = 0; i < numberToRemove; i++) {
+	            game.enemies[i].kill();
 	          }
 	          break;
 	        default:
@@ -663,8 +697,8 @@
 	      var isNotRecovering = timeSinceLastHit > ELECTRIC_SHIELD_RECOVERY_TIME;
 	      if (isNotRecovering && this.electricShieldHitPoints > 0) {
 	        this.electricShieldHitPoints--;
-	        enemy.isDead = true;
-	        game.removeShield('electricShield');
+	        enemy.kill();
+	        game.removeElectricShield();
 	        this.lastHit = Date.now();
 	        return;
 	      }
@@ -672,10 +706,11 @@
 	      // if player has shield
 	      isNotRecovering = timeSinceLastHit > SHIELD_RECOVERY_TIME;
 	      if (isNotRecovering && this.shieldHitPoints === 0) {
-	        game.reset();
+	        this.kill();
+	        game.gameOver = true;
 	      } else if (isNotRecovering) {
 	        this.shieldHitPoints--;
-	        game.removeShield('shield');
+	        game.removeShield();
 	        this.lastHit = Date.now();
 	      }
 	    }
@@ -706,6 +741,7 @@
 	      var input = window.input;
 	      var pos = this.pos;
 	      var vel = this.vel;
+	      var isDead = this.isDead;
 	      var sprites = this.sprites;
 	      var jumpNumber = this.jumpNumber;
 	      var handleJumpKeyPress = this.handleJumpKeyPress;
@@ -713,6 +749,10 @@
 	      var PLAYER_HORIZONTAL_VEL = CONSTANTS.PLAYER_HORIZONTAL_VEL;
 	      var PLAYER_HORIZONTAL_ACC = CONSTANTS.PLAYER_HORIZONTAL_ACC;
 	
+	
+	      if (isDead) {
+	        return;
+	      }
 	
 	      if (input.isDown('UP') || input.isDown('SPACE')) {
 	        handleJumpKeyPress();
@@ -821,14 +861,14 @@
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
 	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -600;
-	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 1000; // millisecs
+	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 500; // millisecs
 	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 100; // millisecs
 	
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // every n millisecs
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4000; // every n millisecs
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 10000; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 6000; // every n millisecs
 
 /***/ },
 /* 5 */
@@ -877,9 +917,9 @@
 	  return new _Sprite2.default({
 	    url: './lib/img/shieldPickup.png',
 	    pos: [0, 0],
-	    frames: [0],
-	    size: [26, 23],
-	    speed: 1,
+	    frames: [0, 1, 2, 1, 0],
+	    size: [64, 64],
+	    speed: 5,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
@@ -890,9 +930,9 @@
 	  return new _Sprite2.default({
 	    url: './lib/img/electricShieldPickup.png',
 	    pos: [0, 0],
-	    frames: [0],
-	    size: [26, 23],
-	    speed: 1,
+	    frames: [0, 1, 2, 1, 0],
+	    size: [64, 64],
+	    speed: 5,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
@@ -903,9 +943,9 @@
 	  return new _Sprite2.default({
 	    url: './lib/img/nukePickup.png',
 	    pos: [0, 0],
-	    frames: [0],
-	    size: [26, 23],
-	    speed: 1,
+	    frames: [0, 1, 2, 1, 0],
+	    size: [64, 64],
+	    speed: 5,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
@@ -1147,9 +1187,19 @@
 	        x += frame * size[0];
 	      }
 	
-	      if (facing === 'left') {
-	        ctx.translate(size[0], 0);
-	        ctx.scale(-1, 1);
+	      switch (facing) {
+	        case 'left':
+	          ctx.translate(size[0], 0);
+	          ctx.scale(-1, 1);
+	          break;
+	        case 'leftFlipped':
+	          ctx.translate(size[0], size[0]);
+	          ctx.scale(-1, -1);
+	          break;
+	        case 'rightFlipped':
+	          ctx.translate(0, size[0]);
+	          ctx.scale(1, -1);
+	          break;
 	      }
 	
 	      ctx.drawImage(_Resources2.default.get(url), x, y, size[0], size[1], 0, 0, size[0], size[1]);
@@ -1170,262 +1220,13 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	
-	var _CONSTANTS = __webpack_require__(4);
-	
-	var _Moveable2 = __webpack_require__(3);
-	
-	var _Moveable3 = _interopRequireDefault(_Moveable2);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Crate = function (_Moveable) {
-	  _inherits(Crate, _Moveable);
-	
-	  function Crate(opts) {
-	    _classCallCheck(this, Crate);
-	
-	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
-	
-	    _this.type = 'crate';
-	
-	    _this.hitbox = function () {
-	      return {
-	        x: _this.pos[0],
-	        y: _this.pos[1],
-	        w: _this.sprite.size[0],
-	        h: _this.sprite.size[1]
-	      };
-	    };
-	    return _this;
-	  }
-	
-	  return Crate;
-	}(_Moveable3.default);
-	
-	exports.default = Crate;
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var Input = function () {
-	  function Input() {
-	    _classCallCheck(this, Input);
-	
-	    this.pressedKeys = {};
-	
-	    this.setKey = this.setKey.bind(this);
-	  }
-	
-	  _createClass(Input, [{
-	    key: 'setup',
-	    value: function setup() {
-	      var _this = this;
-	
-	      var setKey = this.setKey;
-	
-	      document.addEventListener('keydown', function (e) {
-	        return setKey(e, true);
-	      });
-	      document.addEventListener('keyup', function (e) {
-	        return setKey(e, false);
-	      });
-	      // window.addEventListener('blur', () => { this.pressedKeys = {}; });
-	      window.input = {
-	        isDown: function isDown(key) {
-	          return _this.pressedKeys[key.toUpperCase()];
-	        }
-	      };
-	
-	      window.addEventListener("keydown", function (e) {
-	        // prevent scrolling with arrow keys
-	        if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
-	          e.preventDefault();
-	        }
-	      }, false);
-	    }
-	  }, {
-	    key: 'setKey',
-	    value: function setKey(event, status) {
-	      var code = event.keyCode;
-	      var key = void 0;
-	
-	      switch (code) {
-	        case 32:
-	          key = 'SPACE';
-	          break;
-	        case 37:
-	          key = 'LEFT';
-	          break;
-	        case 38:
-	          key = 'UP';
-	          break;
-	        case 39:
-	          key = 'RIGHT';
-	          break;
-	        case 40:
-	          key = 'DOWN';
-	          break;
-	        default:
-	          key = String.fromCharCode(code);
-	      }
-	
-	      this.pressedKeys[key] = status;
-	    }
-	  }]);
-	
-	  return Input;
-	}();
-	
-	exports.default = new Input();
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _Moveable2 = __webpack_require__(3);
-	
-	var _Moveable3 = _interopRequireDefault(_Moveable2);
-	
-	var _CONSTANTS = __webpack_require__(4);
-	
-	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
-	
-	var _SPRITES = __webpack_require__(5);
-	
-	var SPRITES = _interopRequireWildcard(_SPRITES);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Enemy = function (_Moveable) {
-	  _inherits(Enemy, _Moveable);
-	
-	  function Enemy(opts) {
-	    _classCallCheck(this, Enemy);
-	
-	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
-	
-	    _this.type = 'enemy';
-	    _this.speed = _this.randomSpeed();
-	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
-	    _this.id = opts.id;
-	    _this.isDead = false;
-	
-	    _this.hitbox = function () {
-	      return {
-	        x: _this.pos[0] + 20,
-	        y: _this.pos[1] + 15,
-	        w: 27,
-	        h: 49
-	      };
-	    };
-	
-	    _this.handleCollision = _this.handleCollision.bind(_this);
-	    _this.update = _this.update.bind(_this);
-	    return _this;
-	  }
-	
-	  _createClass(Enemy, [{
-	    key: 'randomSpeed',
-	    value: function randomSpeed() {
-	      return CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
-	    }
-	  }, {
-	    key: 'handleCollision',
-	    value: function handleCollision(collisionType) {
-	      if (collisionType === 'right') {
-	        this.direction = 'left';
-	      } else if (collisionType === 'left') {
-	        this.direction = 'right';
-	      }
-	    }
-	  }, {
-	    key: 'update',
-	    value: function update(dt) {
-	      var sprites = this.sprites;
-	      var direction = this.direction;
-	      var speed = this.speed;
-	
-	      if (direction === 'left') {
-	        this.vel[0] = -speed;
-	        this.sprite = sprites.runRight; // facing wrong way in sprite sheet
-	      } else if (direction === 'right') {
-	        this.vel[0] = speed;
-	        this.sprite = sprites.runLeft; // facing wrong way in sprite sheet
-	      }
-	      if (this.pos[0] > 900 || this.pos[1] > 600) {
-	        this.pos[0] = 400;
-	        this.pos[1] = 0;
-	        this.speed = this.randomSpeed();
-	      }
-	
-	      this.lastPos[0] = this.pos[0];
-	      this.lastPos[1] = this.pos[1];
-	      this.lastVel[0] = this.vel[0];
-	      this.lastVel[1] = this.vel[1];
-	
-	      this.vel[1] += Math.random() > 0.9998 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
-	      this.vel[1] += CONSTANTS.GRAVITY * dt;
-	      this.pos[0] += this.vel[0] * dt;
-	      this.pos[1] += this.vel[1] * dt;
-	      this.sprite.update(dt);
-	    }
-	  }]);
-	
-	  return Enemy;
-	}(_Moveable3.default);
-	
-	exports.default = Enemy;
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
 	exports.HAMMER = exports.PLAYER = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = exports.SHIELD = exports.ELECTRIC_SHIELD = exports.CRATE = undefined;
 	
 	var _SPRITES = __webpack_require__(5);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(11);
+	var _STAGES = __webpack_require__(8);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -1433,15 +1234,15 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _WallSprite = __webpack_require__(13);
+	var _WallSprite = __webpack_require__(10);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
-	var _Powerup = __webpack_require__(14);
+	var _Powerup = __webpack_require__(11);
 	
 	var _Powerup2 = _interopRequireDefault(_Powerup);
 	
-	var _Crate = __webpack_require__(7);
+	var _Crate = __webpack_require__(12);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -1449,11 +1250,11 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
-	var _Enemy = __webpack_require__(9);
+	var _Enemy = __webpack_require__(13);
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
-	var _Shield = __webpack_require__(16);
+	var _Shield = __webpack_require__(14);
 	
 	var _Shield2 = _interopRequireDefault(_Shield);
 	
@@ -1520,8 +1321,7 @@
 	var PLAYER = exports.PLAYER = function PLAYER() {
 	  return new _Player2.default({
 	    type: 'player',
-	    pos: [450, 300],
-	    lastPos: [450, 300],
+	    pos: [450, 250],
 	    vel: [0, 0],
 	    sprites: {
 	      idleRight: SPRITES.PLAYER_IDLE_RIGHT(),
@@ -1547,7 +1347,7 @@
 	};
 
 /***/ },
-/* 11 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1557,7 +1357,7 @@
 	});
 	exports.POWERUP_SPAWN = exports.CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
-	var _Wall = __webpack_require__(12);
+	var _Wall = __webpack_require__(9);
 	
 	var _Wall2 = _interopRequireDefault(_Wall);
 	
@@ -1646,14 +1446,14 @@
 	};
 	
 	var POWERUP_SPAWN = exports.POWERUP_SPAWN = function POWERUP_SPAWN() {
-	  var seeds = [[440, 250], [110, 150], [790, 150], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100]];
+	  var seeds = [[420, 250], [70, 150], [750, 150], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90]];
 	
 	  var seed = seeds[sample(seeds.length)];
 	  return [seed[0], seed[1]];
 	};
 
 /***/ },
-/* 12 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1662,7 +1462,7 @@
 	  value: true
 	});
 	
-	var _WallSprite = __webpack_require__(13);
+	var _WallSprite = __webpack_require__(10);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
@@ -1696,7 +1496,7 @@
 	exports.default = Wall;
 
 /***/ },
-/* 13 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1742,7 +1542,7 @@
 	exports.default = WallSprite;
 
 /***/ },
-/* 14 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1800,7 +1600,57 @@
 	exports.default = Powerup;
 
 /***/ },
-/* 15 */
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var _Moveable2 = __webpack_require__(3);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Crate = function (_Moveable) {
+	  _inherits(Crate, _Moveable);
+	
+	  function Crate(opts) {
+	    _classCallCheck(this, Crate);
+	
+	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
+	
+	    _this.type = 'crate';
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0],
+	        y: _this.pos[1],
+	        w: _this.sprite.size[0],
+	        h: _this.sprite.size[1]
+	      };
+	    };
+	    return _this;
+	  }
+	
+	  return Crate;
+	}(_Moveable3.default);
+	
+	exports.default = Crate;
+
+/***/ },
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1811,7 +1661,266 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Crate = __webpack_require__(7);
+	var _Moveable2 = __webpack_require__(3);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	var _SPRITES = __webpack_require__(5);
+	
+	var SPRITES = _interopRequireWildcard(_SPRITES);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Enemy = function (_Moveable) {
+	  _inherits(Enemy, _Moveable);
+	
+	  function Enemy(opts) {
+	    _classCallCheck(this, Enemy);
+	
+	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
+	
+	    _this.type = 'enemy';
+	    _this.speed = _this.randomSpeed();
+	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
+	    _this.id = opts.id;
+	    _this.isDead = false;
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0] + 20,
+	        y: _this.pos[1] + 15,
+	        w: 27,
+	        h: 49
+	      };
+	    };
+	
+	    _this.handleCollision = _this.handleCollision.bind(_this);
+	    _this.update = _this.update.bind(_this);
+	    _this.kill = _this.kill.bind(_this);
+	    return _this;
+	  }
+	
+	  _createClass(Enemy, [{
+	    key: 'randomSpeed',
+	    value: function randomSpeed() {
+	      return CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
+	    }
+	  }, {
+	    key: 'handleCollision',
+	    value: function handleCollision(collisionType) {
+	      if (collisionType === 'right') {
+	        this.direction = 'left';
+	      } else if (collisionType === 'left') {
+	        this.direction = 'right';
+	      }
+	    }
+	  }, {
+	    key: 'kill',
+	    value: function kill() {
+	      this.isDead = true;
+	      this.vel[1] += -400;
+	      this.sprites.runRight.facing = 'rightFlipped';
+	      this.sprites.runLeft.facing = 'leftFlipped';
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(dt) {
+	      var sprites = this.sprites;
+	      var direction = this.direction;
+	      var speed = this.speed;
+	
+	      if (direction === 'left') {
+	        this.vel[0] = -speed;
+	        this.sprite = sprites.runRight; // facing wrong way in sprite sheet
+	      } else if (direction === 'right') {
+	        this.vel[0] = speed;
+	        this.sprite = sprites.runLeft; // facing wrong way in sprite sheet
+	      }
+	      if (this.pos[0] > 900 || this.pos[1] > 600) {
+	        this.pos[0] = 400;
+	        this.pos[1] = 0;
+	        this.speed = this.randomSpeed();
+	      }
+	
+	      this.lastPos[0] = this.pos[0];
+	      this.lastPos[1] = this.pos[1];
+	      this.lastVel[0] = this.vel[0];
+	      this.lastVel[1] = this.vel[1];
+	
+	      this.vel[1] += Math.random() > 0.9998 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
+	      this.vel[1] += CONSTANTS.GRAVITY * dt;
+	      this.pos[0] += this.vel[0] * dt;
+	      this.pos[1] += this.vel[1] * dt;
+	      this.sprite.update(dt);
+	    }
+	  }]);
+	
+	  return Enemy;
+	}(_Moveable3.default);
+	
+	exports.default = Enemy;
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _Moveable2 = __webpack_require__(3);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Shield = function (_Moveable) {
+	  _inherits(Shield, _Moveable);
+	
+	  function Shield(opts) {
+	    _classCallCheck(this, Shield);
+	
+	    var _this = _possibleConstructorReturn(this, (Shield.__proto__ || Object.getPrototypeOf(Shield)).call(this, opts));
+	
+	    _this.type = opts.type;
+	    return _this;
+	  }
+	
+	  _createClass(Shield, [{
+	    key: 'update',
+	    value: function update(dt) {
+	      this.sprite.update(dt);
+	    }
+	  }]);
+	
+	  return Shield;
+	}(_Moveable3.default);
+	
+	exports.default = Shield;
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Input = function () {
+	  function Input() {
+	    _classCallCheck(this, Input);
+	
+	    this.pressedKeys = {};
+	
+	    this.setKey = this.setKey.bind(this);
+	  }
+	
+	  _createClass(Input, [{
+	    key: 'setup',
+	    value: function setup() {
+	      var _this = this;
+	
+	      var setKey = this.setKey;
+	
+	      document.addEventListener('keydown', function (e) {
+	        return setKey(e, true);
+	      });
+	      document.addEventListener('keyup', function (e) {
+	        return setKey(e, false);
+	      });
+	      // window.addEventListener('blur', () => { this.pressedKeys = {}; });
+	      window.input = {
+	        isDown: function isDown(key) {
+	          return _this.pressedKeys[key.toUpperCase()];
+	        }
+	      };
+	
+	      window.addEventListener("keydown", function (e) {
+	        // prevent scrolling with arrow keys
+	        if ([32, 37, 38, 39, 40, 80].indexOf(e.keyCode) > -1) {
+	          e.preventDefault();
+	        }
+	      }, false);
+	    }
+	  }, {
+	    key: 'setKey',
+	    value: function setKey(event, status) {
+	      var code = event.keyCode;
+	      var key = void 0;
+	
+	      switch (code) {
+	        case 32:
+	          key = 'SPACE';
+	          break;
+	        case 37:
+	          key = 'LEFT';
+	          break;
+	        case 38:
+	          key = 'UP';
+	          break;
+	        case 39:
+	          key = 'RIGHT';
+	          break;
+	        case 40:
+	          key = 'DOWN';
+	          break;
+	        case 82:
+	          key = 'R';
+	          break;
+	        default:
+	          key = String.fromCharCode(code);
+	      }
+	
+	      this.pressedKeys[key] = status;
+	    }
+	  }]);
+	
+	  return Input;
+	}();
+	
+	exports.default = new Input();
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _Crate = __webpack_require__(12);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -1862,6 +1971,9 @@
 	  }, {
 	    key: 'handlePlayerCollisions',
 	    value: function handlePlayerCollisions(player, otherObjects) {
+	      if (player.isDead) {
+	        return;
+	      }
 	      var game = this.game;
 	      var typeOfCollision = this.typeOfCollision;
 	      var entityHitWall = this.entityHitWall;
@@ -2118,54 +2230,6 @@
 	}();
 	
 	exports.default = CollisionManager;
-
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _Moveable2 = __webpack_require__(3);
-	
-	var _Moveable3 = _interopRequireDefault(_Moveable2);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Shield = function (_Moveable) {
-	  _inherits(Shield, _Moveable);
-	
-	  function Shield(opts) {
-	    _classCallCheck(this, Shield);
-	
-	    var _this = _possibleConstructorReturn(this, (Shield.__proto__ || Object.getPrototypeOf(Shield)).call(this, opts));
-	
-	    _this.type = opts.type;
-	    return _this;
-	  }
-	
-	  _createClass(Shield, [{
-	    key: 'update',
-	    value: function update(dt) {
-	      this.sprite.update(dt);
-	    }
-	  }]);
-	
-	  return Shield;
-	}(_Moveable3.default);
-	
-	exports.default = Shield;
 
 /***/ }
 /******/ ]);
