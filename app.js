@@ -135,10 +135,26 @@
 	  }, {
 	    key: 'main',
 	    value: function main() {
-	      if (this.gameOver & !this.isResetting) {
+	      var input = window.input;
+	
+	      if ((this.gameOver || input.isDown('R')) && !this.isResetting) {
+	        this.player.kill();
 	        this.reset();
-	        console.log('reset');
 	        return;
+	      }
+	
+	      if (input.isDown('M')) {
+	        if (!this.muteHeldDown) {
+	          this.audioIsPlaying = !this.audioIsPlaying;
+	          if (this.audioIsPlaying) {
+	            this.audio.play();
+	          } else {
+	            this.audio.pause();
+	          }
+	        }
+	        this.muteHeldDown = true;
+	      } else {
+	        this.muteHeldDown = false;
 	      }
 	
 	      var reset = this.reset;
@@ -255,9 +271,12 @@
 	
 	      this.gameOver = false;
 	      this.isResetting = false;
+	      this.muteHeldDown = false;
+	      this.audioIsPlaying = false;
 	      // loads resources
 	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png', './lib/img/shield.png']);
 	      var init = function init() {
+	        _this3.audio = new Audio('./lib/img/bonetrousle.mp3');
 	        _this3.main();
 	      };
 	      _Resources2.default.onReady(init);
@@ -269,8 +288,8 @@
 	      this.score = 0;
 	      this.scoreEl = document.getElementById('score');
 	      this.scoreEl.className = 'single_digits';
-	      this.velocityEl = document.getElementById('velocity');
-	      this.positionEl = document.getElementById('position');
+	      // this.velocityEl = document.getElementById('velocity');
+	      // this.positionEl = document.getElementById('position');
 	      this.collisionManager = new _CollisionManager2.default(this);
 	
 	      this.player = (0, _UNITS.PLAYER)();
@@ -330,9 +349,8 @@
 	      var vy = this.player.vel[1].toFixed(0);
 	      var x = this.player.hitbox().x.toFixed(0);
 	      var y = this.player.hitbox().y.toFixed(0);
-	      this.velocityEl.innerHTML = 'Electric Shield: ' + player.electricShieldHitPoints;
 	      // this.velocityEl.innerHTML = `V: ${vx}, ${vy}`;
-	      this.positionEl.innerHTML = 'P: ' + x + ', ' + y;
+	      // this.positionEl.innerHTML = `P: ${x}, ${y}`;
 	    }
 	  }, {
 	    key: 'renderEntity',
@@ -866,9 +884,9 @@
 	
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4500; // every n millisecs
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4750; // every n millisecs
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 5000; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 6000; // every n millisecs
 
 /***/ },
 /* 5 */
@@ -1892,6 +1910,9 @@
 	        case 40:
 	          key = 'DOWN';
 	          break;
+	        case 77:
+	          key = 'M';
+	          break;
 	        case 82:
 	          key = 'R';
 	          break;
@@ -1941,7 +1962,7 @@
 	    _classCallCheck(this, CollisionManager);
 	
 	    this.game = game;
-	    this.collisionEl = document.getElementById('collision');
+	    // this.collisionEl = document.getElementById('collision');
 	    this.entityHitWall = this.entityHitWall.bind(this);
 	    this.typeOfCollision = this.typeOfCollision.bind(this);
 	    this.handleCollisions = this.handleCollisions.bind(this);
@@ -2067,7 +2088,7 @@
 	
 	      if (entity.type === 'player') {
 	
-	        this.collisionEl.innerHTML = collisionType;
+	        // this.collisionEl.innerHTML = collisionType;
 	      }
 	      switch (collisionType) {
 	        case 'bottom':
