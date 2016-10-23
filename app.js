@@ -410,9 +410,9 @@
 	      this.currentObjectId++;
 	      var seed = Math.random();
 	      var powerup = void 0;
-	      if (seed <= 0.50) {
+	      if (seed <= 0.4) {
 	        powerup = UNITS.SHIELD_PICKUP(this.currentObjectId);
-	      } else if (seed > 0.50 && seed < 0.80) {
+	      } else if (seed > 0.4 && seed < 0.8) {
 	        powerup = UNITS.ELECTRIC_SHIELD_PICKUP(this.currentObjectId);
 	      } else {
 	        powerup = UNITS.NUKE_PICKUP(this.currentObjectId);
