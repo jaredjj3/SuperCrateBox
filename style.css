@@ -63,9 +63,12 @@ body {
 }
 
 .instructions {
+  width: 900px;
+  margin: 0 auto;
   color: yellow;
   font-size: 32px;
   margin: 0 auto;
+  display: flex;
 }
 
 ul {
@@ -77,5 +80,26 @@ ul {
   background-image: url("./lib/img/crate.png");
   width: 20px;
   height: 20px;
+  display: inline-block;
+}
+
+.shield {
+  background-image: url("./lib/img/shieldPickup.png");
+  width: 64px;
+  height: 64px;
+  display: inline-block;
+}
+
+.electric_shield {
+  background-image: url("./lib/img/electricShieldPickup.png");
+  width: 64px;
+  height: 64px;
+  display: inline-block;
+}
+
+.nuke {
+  background-image: url("./lib/img/nukePickup.png");
+  width: 64px;
+  height: 64px;
   display: inline-block;
 }

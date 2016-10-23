@@ -752,7 +752,7 @@
 	          outerElectricShield.sprite = outerElectricShield.sprites.flashing;
 	          setTimeout(function () {
 	            return game.removeElectricShield(outerElectricShield.id);
-	          }, SHIELD_RECOVERY_TIME);
+	          }, ELECTRIC_SHIELD_RECOVERY_TIME);
 	          _this2.lastHit = Date.now();
 	          return {
 	            v: void 0
@@ -1903,6 +1903,7 @@
 	
 	    var _this = _possibleConstructorReturn(this, (Shield.__proto__ || Object.getPrototypeOf(Shield)).call(this, opts));
 	
+	    _this.id = opts.id;
 	    _this.type = opts.type;
 	    return _this;
 	  }
