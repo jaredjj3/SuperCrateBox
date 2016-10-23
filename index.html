@@ -5,6 +5,7 @@
     <title>SuperCrateBox</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
       body {
         font-family: 'VT323', monospace;
@@ -14,11 +15,36 @@
   </head>
   <body>
     <div class="game_container">
+      <h1 class="title">
+        SuperCrateBox
+        <h1 class='single_digit' id='score'></h1>
+      </h1>
       <canvas id="canvas" class="canvas_container" height="600" width="900"/>
     </div>
-    <h1 className='single_digit' id='score'></h1>
-    <h1 id='velocity'></h1>
-    <h1 id='position'></h1>
-    <h1 id='collision'></h1>
+    <ul class='instructions'>
+      <li>
+        move:
+        <i class="material-icons">arrow_back</i>
+        <i class="material-icons">arrow_forward</i>
+      </li>
+      <li>
+        jump: <i class="material-icons">arrow_upward</i>
+        OR
+        spacebar
+      </li>
+      <li>
+        <div class="crate"></div>  points
+      </li>
+      <li>
+        <div class="shield"></div> shield
+      </li>
+      <li>
+        <div class="electric_shield"></div> electric shield
+      </li>
+      <li>
+        <div class="nuke"></div> nuke
+      </li>
+    </ul>
+    <i id='volume' class='material-icons'>volume_off</i>
   </body>
 </html>

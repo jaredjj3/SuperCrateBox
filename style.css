@@ -1,33 +1,81 @@
+body {
+  background: url("./lib/img/background.png");
+}
+
+.title {
+  font-size: 64px;
+  margin: 0 0 20px 0;
+  color: yellow;
+  background: url("./lib/img/background.png");
+  position: relative;
+}
+
 .game_container {
   width: 900px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+  margin: 0 auto;
 }
 
 .canvas_container {
   width: 900px;
   height: 600px;
   border-bottom: 1px solid black;
-  position: relative;
 }
 
 .single_digits {
   position: absolute;
   font-size: 72px;
   color: yellow;
-  top: -30px;
-  left: 445px;
+  top: 30px;
 }
 
 .double_digits {
   position: absolute;
   font-size: 72px;
   color: orange;
-  top: -30px;
-  left: 430px;
+  top: 30px;
+}
+
+.high_digits {
+  position: absolute;
+  font-size: 72px;
+  color: red;
+  top: 30px;
 }
 
 #canvas {
   background: url("./lib/img/background.png");
+}
+
+#volume {
+  font-size: 54px;
+  color: yellow;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+#volume:hover {
+  cursor: pointer;
+}
+
+.instructions {
+  color: yellow;
+  font-size: 32px;
+  margin: 0 auto;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.crate {
+  background-image: url("./lib/img/crate.png");
+  width: 20px;
+  height: 20px;
+  display: inline-block;
 }

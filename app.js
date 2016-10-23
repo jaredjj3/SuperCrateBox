@@ -143,13 +143,17 @@
 	        return;
 	      }
 	
-	      if (input.isDown('M')) {
+	      if (input.isDown('M') || this.volumeClicked) {
 	        if (!this.muteHeldDown) {
 	          this.audioIsPlaying = !this.audioIsPlaying;
 	          if (this.audioIsPlaying) {
+	            this.volumeEl.innerHTML = 'volume_up';
 	            this.audio.play();
+	            this.volumeClicked = false;
 	          } else {
+	            this.volumeEl.innerHTML = 'volume_off';
 	            this.audio.pause();
+	            this.volumeClicked = false;
 	          }
 	        }
 	        this.muteHeldDown = true;
@@ -277,6 +281,11 @@
 	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png', './lib/img/shield.png']);
 	      var init = function init() {
 	        _this3.audio = new Audio('./lib/img/bonetrousle.mp3');
+	        var audio = _this3.audio;
+	        _this3.audio.addEventListener('ended', function () {
+	          audio.currentTime = 0;
+	          audio.play();
+	        }, false);
 	        _this3.main();
 	      };
 	      _Resources2.default.onReady(init);
@@ -286,6 +295,10 @@
 	      var canvas = document.getElementById('canvas');
 	      this.ctx = canvas.getContext('2d');
 	      this.score = 0;
+	      this.volumeEl = document.getElementById('volume');
+	      this.volumeEl.addEventListener('click', function () {
+	        _this3.volumeClicked = true;
+	      });
 	      this.scoreEl = document.getElementById('score');
 	      this.scoreEl.className = 'single_digits';
 	      // this.velocityEl = document.getElementById('velocity');
@@ -342,7 +355,9 @@
 	      var player = this.player;
 	
 	      this.scoreEl.innerHTML = score;
-	      if (this.score > 9) {
+	      if (this.score > 19) {
+	        this.scoreEl.className = "high_digits";
+	      } else if (this.score > 9) {
 	        this.scoreEl.className = "double_digits";
 	      }
 	      var vx = this.player.vel[0].toFixed(0);
@@ -418,13 +433,25 @@
 	    }
 	  }, {
 	    key: 'removeShield',
-	    value: function removeShield() {
-	      this.shields.splice(0, 1);
+	    value: function removeShield(targetId) {
+	      for (var i = 0; i < this.shields.length; i++) {
+	        var shield = this.shields[i];
+	        if (shield.id === targetId) {
+	          this.shields.splice(i, 1);
+	          return;
+	        }
+	      }
 	    }
 	  }, {
 	    key: 'removeElectricShield',
-	    value: function removeElectricShield() {
-	      this.electricShields.splice(0, 1);
+	    value: function removeElectricShield(targetId) {
+	      for (var i = 0; i < this.electricShields.length; i++) {
+	        var electricShield = this.electricShields[i];
+	        if (electricShield.id === targetId) {
+	          this.electricShields.splice(i, 1);
+	          return;
+	        }
+	      }
 	    }
 	  }, {
 	    key: 'removeEnemy',
@@ -584,6 +611,8 @@
 	  value: true
 	});
 	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _Moveable2 = __webpack_require__(3);
@@ -693,7 +722,7 @@
 	          game.addElectricShield();
 	          break;
 	        case 'nuke':
-	          var numberToRemove = Math.floor(game.enemies.length * 0.75);
+	          var numberToRemove = game.enemies.length === 1 ? 1 : Math.floor(game.enemies.length * 0.75);
 	          for (var i = 0; i < numberToRemove; i++) {
 	            game.enemies[i].kill();
 	          }
@@ -705,6 +734,8 @@
 	  }, {
 	    key: 'handleEnemyCollision',
 	    value: function handleEnemyCollision(enemy, game) {
+	      var _this2 = this;
+	
 	      var SHIELD_RECOVERY_TIME = CONSTANTS.SHIELD_RECOVERY_TIME;
 	      var ELECTRIC_SHIELD_RECOVERY_TIME = CONSTANTS.ELECTRIC_SHIELD_RECOVERY_TIME;
 	
@@ -714,11 +745,21 @@
 	      // if player has electric shield
 	      var isNotRecovering = timeSinceLastHit > ELECTRIC_SHIELD_RECOVERY_TIME;
 	      if (isNotRecovering && this.electricShieldHitPoints > 0) {
-	        this.electricShieldHitPoints--;
-	        enemy.kill();
-	        game.removeElectricShield();
-	        this.lastHit = Date.now();
-	        return;
+	        var _ret = function () {
+	          _this2.electricShieldHitPoints--;
+	          enemy.kill();
+	          var outerElectricShield = game.electricShields[game.electricShields.length - 1];
+	          outerElectricShield.sprite = outerElectricShield.sprites.flashing;
+	          setTimeout(function () {
+	            return game.removeElectricShield(outerElectricShield.id);
+	          }, SHIELD_RECOVERY_TIME);
+	          _this2.lastHit = Date.now();
+	          return {
+	            v: void 0
+	          };
+	        }();
+	
+	        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 	      }
 	
 	      // if player has shield
@@ -727,9 +768,15 @@
 	        this.kill();
 	        game.gameOver = true;
 	      } else if (isNotRecovering) {
-	        this.shieldHitPoints--;
-	        game.removeShield();
-	        this.lastHit = Date.now();
+	        (function () {
+	          _this2.shieldHitPoints--;
+	          var outerShield = game.shields[game.shields.length - 1];
+	          outerShield.sprite = outerShield.sprites.flashing;
+	          setTimeout(function () {
+	            return game.removeShield(outerShield.id);
+	          }, SHIELD_RECOVERY_TIME);
+	          _this2.lastHit = Date.now();
+	        })();
 	      }
 	    }
 	  }, {
@@ -880,7 +927,7 @@
 	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -600;
 	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 500; // millisecs
-	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 100; // millisecs
+	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 500; // millisecs
 	
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
@@ -897,7 +944,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = exports.SHIELD = exports.ELECTRIC_SHIELD = undefined;
+	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = exports.SHIELD_FLASHING = exports.SHIELD = exports.ELECTRIC_SHIELD_FLASHING = exports.ELECTRIC_SHIELD = undefined;
 	
 	var _Sprite = __webpack_require__(6);
 	
@@ -918,6 +965,19 @@
 	  });
 	};
 	
+	var ELECTRIC_SHIELD_FLASHING = exports.ELECTRIC_SHIELD_FLASHING = function ELECTRIC_SHIELD_FLASHING() {
+	  return new _Sprite2.default({
+	    url: './lib/img/electricShield.png',
+	    pos: [0, 0],
+	    frames: [0, 5, 1, 5, 2, 5, 3, 5, 2, 5, 1, 5, 0],
+	    size: [64, 64],
+	    speed: 20,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
 	var SHIELD = exports.SHIELD = function SHIELD() {
 	  return new _Sprite2.default({
 	    url: './lib/img/shield.png',
@@ -925,6 +985,19 @@
 	    frames: [0, 1, 2, 3, 2, 1, 0],
 	    size: [64, 64],
 	    speed: 10,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
+	var SHIELD_FLASHING = exports.SHIELD_FLASHING = function SHIELD_FLASHING() {
+	  return new _Sprite2.default({
+	    url: './lib/img/shield.png',
+	    pos: [0, 0],
+	    frames: [0, 5, 1, 5, 2, 5, 3, 5, 2, 5, 1, 5, 0],
+	    size: [64, 64],
+	    speed: 20,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
@@ -1293,6 +1366,10 @@
 	    id: id,
 	    pos: player.pos,
 	    type: 'electricShield',
+	    sprites: {
+	      normal: SPRITES.ELECTRIC_SHIELD(),
+	      flashing: SPRITES.ELECTRIC_SHIELD_FLASHING()
+	    },
 	    sprite: SPRITES.ELECTRIC_SHIELD()
 	  });
 	};
@@ -1302,6 +1379,10 @@
 	    id: id,
 	    pos: player.pos,
 	    type: 'shield',
+	    sprites: {
+	      normal: SPRITES.SHIELD(),
+	      flashing: SPRITES.SHIELD_FLASHING()
+	    },
 	    sprite: SPRITES.SHIELD()
 	  });
 	};
