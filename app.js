@@ -104,20 +104,22 @@
 	
 	    this.play = this.play.bind(this);
 	    this.main = this.main.bind(this);
-	    this.update = this.update.bind(this);
-	    this.render = this.render.bind(this);
 	    this.setup = this.setup.bind(this);
 	    this.reset = this.reset.bind(this);
+	    this.update = this.update.bind(this);
+	    this.render = this.render.bind(this);
 	    this.addEnemy = this.addEnemy.bind(this);
-	    this.addPowerup = this.addPowerup.bind(this);
-	    this.removeEnemy = this.removeEnemy.bind(this);
+	    this.addShield = this.addShield.bind(this);
 	    this.resetCrate = this.resetCrate.bind(this);
 	    this.renderHtml = this.renderHtml.bind(this);
+	    this.allObjects = this.allObjects.bind(this);
+	    this.addPowerup = this.addPowerup.bind(this);
+	    this.removeEnemy = this.removeEnemy.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
-	    this.checkPlayerBounds = this.checkPlayerBounds.bind(this);
-	    this.allObjects = this.allObjects.bind(this);
 	    this.updateEntities = this.updateEntities.bind(this);
+	    this.checkPlayerBounds = this.checkPlayerBounds.bind(this);
+	    this.removeShield = this.removeShield.bind(this);
 	  }
 	
 	  _createClass(SuperCrateBox, [{
@@ -184,6 +186,7 @@
 	      var enemies = this.enemies;
 	      var crate = this.crate;
 	      var stage = this.stage;
+	      var shields = this.shields;
 	      var powerups = this.powerups;
 	      var renderEntity = this.renderEntity;
 	      var renderEntities = this.renderEntities;
@@ -197,6 +200,7 @@
 	      renderEntity(crate);
 	      renderEntities(stage);
 	      renderEntities(powerups);
+	      renderEntities(shields);
 	    }
 	
 	    // private
@@ -220,11 +224,11 @@
 	      this.scoreEl.className = 'single_digits';
 	
 	      this.player = (0, _UNITS.PLAYER)();
-	
+	      this.currentObjectId = 0;
 	      this.enemies = [];
-	      this.powerups = [];
-	
+	      this.shields = [];
 	      this.crate = (0, _UNITS.CRATE)();
+	      this.powerups = [];
 	      this.stage = STAGES.STAGE_1;
 	
 	      this.main();
@@ -255,11 +259,9 @@
 	      this.collisionManager = new _CollisionManager2.default(this);
 	
 	      this.player = (0, _UNITS.PLAYER)();
-	
+	      this.currentObjectId = 0;
 	      this.enemies = [];
-	      this.currentEnemyId = 0;
-	      this.currentPowerupId = 0;
-	
+	      this.shields = [];
 	      this.crate = (0, _UNITS.CRATE)();
 	      this.powerups = [];
 	      this.stage = STAGES.STAGE_1;
@@ -270,11 +272,20 @@
 	      this.player.update(dt);
 	      this.crate.update(dt);
 	      for (var i = 0; i < this.enemies.length; i++) {
-	        this.enemies[i].update(dt);
+	        var enemy = this.enemies[i];
+	        enemy.update(dt, this);
+	        if (enemy.isDead && enemy.pos[1] > 600) {
+	          enemy.update(dt, this);
+	          this.removeEnemy(enemy.id);
+	        }
 	      }
 	
 	      for (var _i = 0; _i < this.powerups.length; _i++) {
 	        this.powerups[_i].update(dt);
+	      }
+	
+	      for (var _i2 = 0; _i2 < this.shields.length; _i2++) {
+	        this.shields[_i2].update(dt);
 	      }
 	    }
 	  }, {
@@ -327,31 +338,58 @@
 	      var crate = this.crate;
 	      var stage = this.stage;
 	      var powerups = this.powerups;
+	      var shields = this.shields;
 	
-	      return { player: player, enemies: enemies, crate: crate, stage: stage, powerups: powerups };
+	      return { player: player, enemies: enemies, crate: crate, stage: stage, powerups: powerups, shields: shields };
 	    }
 	  }, {
 	    key: 'addEnemy',
 	    value: function addEnemy() {
 	      this.lastEnemySpawnTime = Date.now();
-	      this.currentEnemyId++;
-	      this.enemies.push((0, _UNITS.HAMMER)(this.currentEnemyId));
+	      this.currentObjectId++;
+	      this.enemies.push((0, _UNITS.HAMMER)(this.currentObjectId));
 	    }
 	  }, {
 	    key: 'addPowerup',
 	    value: function addPowerup() {
 	      this.lastPowerupSpawnTime = Date.now();
-	      this.currentPowerupId++;
+	      this.currentObjectId++;
 	      var seed = Math.random();
 	      var powerup = void 0;
 	      if (seed <= 0.75) {
-	        powerup = UNITS.SHIELD(this.currentPowerupId);
+	        powerup = UNITS.SHIELD_PICKUP(this.currentObjectId);
 	      } else if (seed > 0.75 && seed < 0.95) {
-	        powerup = UNITS.ELECTRIC_SHIELD(this.currentPowerupId);
+	        powerup = UNITS.ELECTRIC_SHIELD_PICKUP(this.currentObjectId);
 	      } else {
-	        powerup = UNITS.NUKE(this.currentPowerupId);
+	        powerup = UNITS.NUKE_PICKUP(this.currentObjectId);
 	      }
 	      this.powerups.push(powerup);
+	    }
+	  }, {
+	    key: 'addShield',
+	    value: function addShield() {
+	      this.currentObjectId++;
+	      this.shields.push(UNITS.SHIELD(this.currentObjectId, this.player));
+	    }
+	  }, {
+	    key: 'addElectricShield',
+	    value: function addElectricShield() {
+	      this.currentObjectId++;
+	      this.shields.push(UNITS.ELECTRIC_SHIELD(this.currentObjectId, this.player));
+	    }
+	  }, {
+	    key: 'removeObject',
+	    value: function removeObject(targetId) {}
+	  }, {
+	    key: 'removeShield',
+	    value: function removeShield(type) {
+	      for (var i = 0; i < this.shields.length; i++) {
+	        var shield = this.shields[i];
+	        if (shield.type === type) {
+	          this.shields.splice(i, 1);
+	          return;
+	        }
+	      }
 	    }
 	  }, {
 	    key: 'removeEnemy',
@@ -518,6 +556,10 @@
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
+	var _UNITS = __webpack_require__(10);
+	
+	var UNITS = _interopRequireWildcard(_UNITS);
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -591,12 +633,16 @@
 	      switch (powerupType) {
 	        case 'shield':
 	          this.shieldHitPoints++;
+	          game.addShield();
 	          break;
 	        case 'electricShield':
-	          this.electricShieldHitPoints += 3;
+	          this.electricShieldHitPoints += 1;
+	          game.addElectricShield();
 	          break;
 	        case 'nuke':
-	          game.enemies = [];
+	          for (var i = 0; i < game.enemies.length; i++) {
+	            game.enemies[i].isDead = true;
+	          }
 	          break;
 	        default:
 	          break;
@@ -604,7 +650,7 @@
 	    }
 	  }, {
 	    key: 'handleEnemyCollision',
-	    value: function handleEnemyCollision(game, enemy) {
+	    value: function handleEnemyCollision(enemy, game) {
 	      var SHIELD_RECOVERY_TIME = CONSTANTS.SHIELD_RECOVERY_TIME;
 	      var ELECTRIC_SHIELD_RECOVERY_TIME = CONSTANTS.ELECTRIC_SHIELD_RECOVERY_TIME;
 	
@@ -615,7 +661,8 @@
 	      var isNotRecovering = timeSinceLastHit > ELECTRIC_SHIELD_RECOVERY_TIME;
 	      if (isNotRecovering && this.electricShieldHitPoints > 0) {
 	        this.electricShieldHitPoints--;
-	        game.removeEnemy(enemy.id);
+	        enemy.isDead = true;
+	        game.removeShield('electricShield');
 	        this.lastHit = Date.now();
 	        return;
 	      }
@@ -626,6 +673,7 @@
 	        game.reset();
 	      } else if (isNotRecovering) {
 	        this.shieldHitPoints--;
+	        game.removeShield('shield');
 	        this.lastHit = Date.now();
 	      }
 	    }
@@ -778,7 +826,7 @@
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
 	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // every n millisecs
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 1000; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 10000; // every n millisecs
 
 /***/ },
 /* 5 */
@@ -789,13 +837,39 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = undefined;
+	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = exports.SHIELD = exports.ELECTRIC_SHIELD = undefined;
 	
 	var _Sprite = __webpack_require__(6);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var ELECTRIC_SHIELD = exports.ELECTRIC_SHIELD = function ELECTRIC_SHIELD() {
+	  return new _Sprite2.default({
+	    url: './lib/img/electricShield.png',
+	    pos: [0, 0],
+	    frames: [0, 1, 2, 3, 2, 1, 0],
+	    size: [64, 64],
+	    speed: 10,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
+	var SHIELD = exports.SHIELD = function SHIELD() {
+	  return new _Sprite2.default({
+	    url: './lib/img/electricShield.png',
+	    pos: [0, 0],
+	    frames: [0, 1, 2, 3, 2, 1, 0],
+	    size: [64, 64],
+	    speed: 10,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
 	
 	var SHIELD_PICKUP = exports.SHIELD_PICKUP = function SHIELD_PICKUP() {
 	  return new _Sprite2.default({
@@ -1266,6 +1340,7 @@
 	    _this.speed = _this.randomSpeed();
 	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
 	    _this.id = opts.id;
+	    _this.isDead = false;
 	
 	    _this.hitbox = function () {
 	      return {
@@ -1342,7 +1417,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER = exports.PLAYER = exports.NUKE = exports.ELECTRIC_SHIELD = exports.SHIELD = exports.CRATE = undefined;
+	exports.HAMMER = exports.PLAYER = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = exports.SHIELD = exports.ELECTRIC_SHIELD = exports.CRATE = undefined;
 	
 	var _SPRITES = __webpack_require__(5);
 	
@@ -1376,6 +1451,10 @@
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
+	var _Shield = __webpack_require__(16);
+	
+	var _Shield2 = _interopRequireDefault(_Shield);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -1388,7 +1467,25 @@
 	  });
 	};
 	
-	var SHIELD = exports.SHIELD = function SHIELD(id) {
+	var ELECTRIC_SHIELD = exports.ELECTRIC_SHIELD = function ELECTRIC_SHIELD(id, player) {
+	  return new _Shield2.default({
+	    id: id,
+	    pos: player.pos,
+	    type: 'electricShield',
+	    sprite: SPRITES.ELECTRIC_SHIELD()
+	  });
+	};
+	
+	var SHIELD = exports.SHIELD = function SHIELD(id, player) {
+	  return new _Shield2.default({
+	    id: id,
+	    pos: player.pos,
+	    type: 'shield',
+	    sprite: SPRITES.SHIELD()
+	  });
+	};
+	
+	var SHIELD_PICKUP = exports.SHIELD_PICKUP = function SHIELD_PICKUP(id) {
 	  return new _Powerup2.default({
 	    id: id,
 	    pos: STAGES.POWERUP_SPAWN(),
@@ -1398,7 +1495,7 @@
 	  });
 	};
 	
-	var ELECTRIC_SHIELD = exports.ELECTRIC_SHIELD = function ELECTRIC_SHIELD(id) {
+	var ELECTRIC_SHIELD_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = function ELECTRIC_SHIELD_PICKUP(id) {
 	  return new _Powerup2.default({
 	    id: id,
 	    pos: STAGES.POWERUP_SPAWN(),
@@ -1408,7 +1505,7 @@
 	  });
 	};
 	
-	var NUKE = exports.NUKE = function NUKE(id) {
+	var NUKE_PICKUP = exports.NUKE_PICKUP = function NUKE_PICKUP(id) {
 	  return new _Powerup2.default({
 	    id: id,
 	    pos: STAGES.POWERUP_SPAWN(),
@@ -1784,16 +1881,18 @@
 	              break;
 	            case 'enemy':
 	              var enemy = otherObject;
-	              player.handleEnemyCollision(game, enemy);
+	              if (!enemy.isDead) {
+	                player.handleEnemyCollision(enemy, game);
+	              }
 	              break;
 	            case 'shield':
 	              var shield = otherObject;
-	              player.handlePowerupCollision('shield');
+	              player.handlePowerupCollision('shield', game);
 	              game.removePowerup(shield.id);
 	              break;
 	            case 'electricShield':
 	              var electricShield = otherObject;
-	              player.handlePowerupCollision('electricShield');
+	              player.handlePowerupCollision('electricShield', game);
 	              game.removePowerup(electricShield.id);
 	              break;
 	            case 'nuke':
@@ -1815,6 +1914,9 @@
 	
 	      for (var i = 0; i < enemies.length; i++) {
 	        var enemy = enemies[i];
+	        if (enemy.isDead) {
+	          continue;
+	        }
 	        for (var j = 0; j < walls.length; j++) {
 	          var wall = walls[j];
 	          var collisionType = typeOfCollision(enemy, wall);
@@ -2014,6 +2116,54 @@
 	}();
 	
 	exports.default = CollisionManager;
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _Moveable2 = __webpack_require__(3);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Shield = function (_Moveable) {
+	  _inherits(Shield, _Moveable);
+	
+	  function Shield(opts) {
+	    _classCallCheck(this, Shield);
+	
+	    var _this = _possibleConstructorReturn(this, (Shield.__proto__ || Object.getPrototypeOf(Shield)).call(this, opts));
+	
+	    _this.type = opts.type;
+	    return _this;
+	  }
+	
+	  _createClass(Shield, [{
+	    key: 'update',
+	    value: function update(dt) {
+	      this.sprite.update(dt);
+	    }
+	  }]);
+	
+	  return Shield;
+	}(_Moveable3.default);
+	
+	exports.default = Shield;
 
 /***/ }
 /******/ ]);
