@@ -65,10 +65,24 @@ body {
 .instructions {
   width: 900px;
   margin: 0 auto;
+  padding-top: 20px;
   color: yellow;
-  font-size: 32px;
+  font-size: 24px;
   margin: 0 auto;
   display: flex;
+  text-align: center;
+}
+
+.instructions > li {
+  margin: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icons {
+  margin: 10px;
 }
 
 ul {
@@ -78,8 +92,10 @@ ul {
 
 .crate {
   background-image: url("./lib/img/crate.png");
-  width: 20px;
-  height: 20px;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 64px;
+  height: 64px;
   display: inline-block;
 }
 
