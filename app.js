@@ -866,9 +866,9 @@
 	
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4000; // every n millisecs
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4500; // every n millisecs
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 6000; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 5000; // every n millisecs
 
 /***/ },
 /* 5 */
