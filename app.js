@@ -241,7 +241,7 @@
 	      this.gameOver = false;
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png']);
+	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png', './lib/img/shield.png']);
 	      var init = function init() {
 	        _this2.main();
 	      };
@@ -356,9 +356,9 @@
 	      this.currentObjectId++;
 	      var seed = Math.random();
 	      var powerup = void 0;
-	      if (seed <= 0.75) {
+	      if (seed <= 0.50) {
 	        powerup = UNITS.SHIELD_PICKUP(this.currentObjectId);
-	      } else if (seed > 0.75 && seed < 0.95) {
+	      } else if (seed > 0.50 && seed < 0.80) {
 	        powerup = UNITS.ELECTRIC_SHIELD_PICKUP(this.currentObjectId);
 	      } else {
 	        powerup = UNITS.NUKE_PICKUP(this.currentObjectId);
@@ -640,7 +640,9 @@
 	          game.addElectricShield();
 	          break;
 	        case 'nuke':
-	          for (var i = 0; i < game.enemies.length; i++) {
+	          var halfEnemies = Math.floor(game.enemies.length / 2);
+	          var numberToRemove = halfEnemies === 0 ? 1 : halfEnemies;
+	          for (var i = 0; i < halfEnemies; i++) {
 	            game.enemies[i].isDead = true;
 	          }
 	          break;
@@ -860,7 +862,7 @@
 	
 	var SHIELD = exports.SHIELD = function SHIELD() {
 	  return new _Sprite2.default({
-	    url: './lib/img/electricShield.png',
+	    url: './lib/img/shield.png',
 	    pos: [0, 0],
 	    frames: [0, 1, 2, 3, 2, 1, 0],
 	    size: [64, 64],
@@ -1395,7 +1397,7 @@
 	      this.lastVel[0] = this.vel[0];
 	      this.lastVel[1] = this.vel[1];
 	
-	      this.vel[1] += Math.random() > 0.9999 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
+	      this.vel[1] += Math.random() > 0.9998 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
 	      this.vel[1] += CONSTANTS.GRAVITY * dt;
 	      this.pos[0] += this.vel[0] * dt;
 	      this.pos[1] += this.vel[1] * dt;
