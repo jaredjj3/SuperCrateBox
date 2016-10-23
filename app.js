@@ -72,11 +72,15 @@
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
+	var _UNITS = __webpack_require__(10);
+	
+	var UNITS = _interopRequireWildcard(_UNITS);
+	
 	var _SPRITES = __webpack_require__(5);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(10);
+	var _STAGES = __webpack_require__(11);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -84,7 +88,7 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _CollisionManager = __webpack_require__(13);
+	var _CollisionManager = __webpack_require__(15);
 	
 	var _CollisionManager2 = _interopRequireDefault(_CollisionManager);
 	
@@ -120,6 +124,7 @@
 	    value: function play() {
 	      this.lastTime = Date.now();
 	      this.lastEnemySpawnTime = Date.now();
+	      this.lastPowerupSpawnTime = Date.now();
 	      this.setup();
 	    }
 	  }, {
@@ -136,8 +141,13 @@
 	      var now = Date.now();
 	      var dt = (now - this.lastTime) / 1000.0;
 	      var timeSinceLastEnemySpawn = now - this.lastEnemySpawnTime;
+	      var timeSinceLastPowerupSpawn = now - this.lastPowerupSpawnTime;
 	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE) {
 	        this.addEnemy();
+	      }
+	
+	      if (timeSinceLastPowerupSpawn >= CONSTANTS.POWERUP_SPAWN_RATE) {
+	        // this.addPowerup();
 	      }
 	
 	      update(dt);
@@ -173,6 +183,7 @@
 	      var enemies = this.enemies;
 	      var crate = this.crate;
 	      var stage = this.stage;
+	      var powerups = this.powerups;
 	      var renderEntity = this.renderEntity;
 	      var renderEntities = this.renderEntities;
 	      var renderHtml = this.renderHtml;
@@ -184,6 +195,7 @@
 	      renderEntity(player);
 	      renderEntity(crate);
 	      renderEntities(stage);
+	      // renderEntities(powerups);
 	    }
 	
 	    // private
@@ -196,11 +208,7 @@
 	      this.crate.pos[0] = -100;
 	      this.crate.pos[1] = 100;
 	      setTimeout(function () {
-	        _this.crate = new _Crate2.default({
-	          pos: STAGES.STAGE_1_CRATE_SPAWN(),
-	          vel: [0, 10],
-	          sprite: SPRITES.CRATE()
-	        });
+	        _this.crate = (0, _UNITS.CRATE)();
 	      }, 500);
 	    }
 	  }, {
@@ -210,26 +218,12 @@
 	      this.score = 0;
 	      this.scoreEl.className = 'single_digits';
 	
-	      this.player = new _Player2.default({
-	        type: 'player',
-	        pos: [450, 300],
-	        lastPos: [450, 300],
-	        vel: [0, 0],
-	        sprites: {
-	          idle: SPRITES.PLAYER_IDLE(),
-	          runRight: SPRITES.PLAYER_RUN_RIGHT(),
-	          runLeft: SPRITES.PLAYER_RUN_LEFT()
-	        },
-	        sprite: SPRITES.PLAYER_IDLE()
-	      });
+	      this.player = (0, _UNITS.PLAYER)();
 	
 	      this.enemies = [];
+	      this.powerups = [];
 	
-	      this.crate = new _Crate2.default({
-	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
-	        vel: [0, 10],
-	        sprite: SPRITES.CRATE()
-	      });
+	      this.crate = (0, _UNITS.CRATE)();
 	      this.stage = STAGES.STAGE_1;
 	
 	      this.main();
@@ -259,27 +253,13 @@
 	      this.positionEl = document.getElementById('position');
 	      this.collisionManager = new _CollisionManager2.default(this);
 	
-	      this.player = new _Player2.default({
-	        type: 'player',
-	        pos: [450, 300],
-	        lastPos: [450, 300],
-	        vel: [0, 0],
-	        sprites: {
-	          idle: SPRITES.PLAYER_IDLE(),
-	          runRight: SPRITES.PLAYER_RUN_RIGHT(),
-	          runLeft: SPRITES.PLAYER_RUN_LEFT()
-	        },
-	        sprite: SPRITES.PLAYER_IDLE()
-	      });
+	      this.player = (0, _UNITS.PLAYER)();
 	
 	      this.enemies = [];
 	      this.currentEnemyId = 0;
 	
-	      this.crate = new _Crate2.default({
-	        pos: STAGES.STAGE_1_CRATE_SPAWN(),
-	        vel: [0, 10],
-	        sprite: SPRITES.CRATE()
-	      });
+	      this.crate = (0, _UNITS.CRATE)();
+	      this.powerups = [];
 	      this.stage = STAGES.STAGE_1;
 	    }
 	  }, {
@@ -289,6 +269,7 @@
 	      this.crate.update(dt);
 	      for (var i = 0; i < this.enemies.length; i++) {
 	        this.enemies[i].update(dt);
+	        // this.powerups[i].update(dt);
 	      }
 	    }
 	  }, {
@@ -348,16 +329,23 @@
 	    value: function addEnemy() {
 	      this.lastEnemySpawnTime = Date.now();
 	      this.currentEnemyId++;
-	      this.enemies.push(new _Enemy2.default({
-	        id: this.currentEnemyId,
-	        pos: [400, 0],
-	        vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
-	        sprites: {
-	          runLeft: SPRITES.HAMMER_RUN_LEFT(),
-	          runRight: SPRITES.HAMMER_RUN_RIGHT()
-	        },
-	        sprite: SPRITES.HAMMER_RUN_LEFT()
-	      }));
+	      this.enemies.push((0, _UNITS.HAMMER)(this.currentEnemyId));
+	    }
+	  }, {
+	    key: 'addPowerup',
+	    value: function addPowerup() {
+	      this.lastPowerupSpawnTime = Date.now();
+	      this.currentPowerupId++;
+	      var seed = Math.random();
+	      var powerup = void 0;
+	      if (seed <= 0.5) {
+	        powerup = UNITS.FREEZE();
+	      } else if (seed > 0.5 && seed < 0.85) {
+	        powerup = UNITS.SHIELD();
+	      } else {
+	        powerup = UNITS.INVINCIBILITY();
+	      }
+	      this.powerups.push(powerup);
 	    }
 	  }, {
 	    key: 'removeEnemy',
@@ -535,6 +523,7 @@
 	    _this.jumpNumber = 0;
 	    _this.jumpKeyPressed = false;
 	    _this.lastJumpTime = Date.now();
+	    _this.lastRunDirection = 'right';
 	
 	    _this.hitbox = function () {
 	      return {
@@ -569,22 +558,17 @@
 	      } else if (vx < 0) {
 	        this.sprite = sprites.runLeft;
 	      } else {
-	        this.sprite = sprites.idle;
+	        if (this.lastRunDirection === 'right') {
+	          this.sprite = sprites.idleRight;
+	        } else if (this.lastRunDirection === 'left') {
+	          this.sprite = sprites.idleLeft;
+	        }
 	      }
 	    }
 	  }, {
 	    key: 'handleEnemyCollision',
 	    value: function handleEnemyCollision(collisionType, enemy, game) {
 	      switch (collisionType) {
-	        case 'bottom':
-	          game.removeEnemy(enemy.id);
-	          break;
-	        case 'left-bottom':
-	          game.removeEnemy(enemy.id);
-	          break;
-	        case 'right-bottom':
-	          game.removeEnemy(enemy.id);
-	          break;
 	        default:
 	          game.reset();
 	          break;
@@ -632,12 +616,14 @@
 	      }
 	
 	      if (input.isDown('LEFT')) {
+	        this.lastRunDirection = 'left';
 	        if (vel[0] > -PLAYER_HORIZONTAL_VEL) {
 	          this.vel[0] -= PLAYER_HORIZONTAL_ACC * dt;
 	        } else {
 	          this.vel[0] = -PLAYER_HORIZONTAL_VEL;
 	        }
 	      } else if (input.isDown('RIGHT')) {
+	        this.lastRunDirection = 'right';
 	        if (this.vel[0] < PLAYER_HORIZONTAL_VEL) {
 	          this.vel[0] += PLAYER_HORIZONTAL_ACC * dt;
 	        } else {
@@ -733,6 +719,7 @@
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
 	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 1000; // every n millisecs
 
 /***/ },
 /* 5 */
@@ -743,7 +730,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE = undefined;
+	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = undefined;
 	
 	var _Sprite = __webpack_require__(6);
 	
@@ -751,7 +738,7 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var PLAYER_IDLE = exports.PLAYER_IDLE = function PLAYER_IDLE() {
+	var PLAYER_IDLE_RIGHT = exports.PLAYER_IDLE_RIGHT = function PLAYER_IDLE_RIGHT() {
 	  return new _Sprite2.default({
 	    url: './lib/img/jay.png',
 	    pos: [0, 0],
@@ -761,6 +748,19 @@
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
+	  });
+	};
+	
+	var PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_LEFT = function PLAYER_IDLE_LEFT() {
+	  return new _Sprite2.default({
+	    url: './lib/img/jay.png',
+	    pos: [0, 0],
+	    frames: [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+	    size: [64, 64],
+	    speed: 24,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'left'
 	  });
 	};
 	
@@ -1244,9 +1244,120 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.STAGE_1_CRATE_SPAWN = exports.STAGE_1 = undefined;
+	exports.HAMMER = exports.PLAYER = exports.FREEZE = exports.INVINCIBILITY = exports.SHIELD = exports.CRATE = undefined;
 	
-	var _Wall = __webpack_require__(11);
+	var _SPRITES = __webpack_require__(5);
+	
+	var SPRITES = _interopRequireWildcard(_SPRITES);
+	
+	var _STAGES = __webpack_require__(11);
+	
+	var STAGES = _interopRequireWildcard(_STAGES);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	var _WallSprite = __webpack_require__(13);
+	
+	var _WallSprite2 = _interopRequireDefault(_WallSprite);
+	
+	var _Powerup = __webpack_require__(14);
+	
+	var _Powerup2 = _interopRequireDefault(_Powerup);
+	
+	var _Crate = __webpack_require__(7);
+	
+	var _Crate2 = _interopRequireDefault(_Crate);
+	
+	var _Player = __webpack_require__(2);
+	
+	var _Player2 = _interopRequireDefault(_Player);
+	
+	var _Enemy = __webpack_require__(9);
+	
+	var _Enemy2 = _interopRequireDefault(_Enemy);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	var CRATE = exports.CRATE = function CRATE() {
+	  return new _Crate2.default({
+	    pos: STAGES.PICKUP_SPAWN(),
+	    vel: [0, 10],
+	    sprite: SPRITES.CRATE()
+	  });
+	};
+	
+	var SHIELD = exports.SHIELD = function SHIELD() {
+	  return new _Powerup2.default({
+	    pos: STAGES.PICKUP_SPAWN(),
+	    vel: [0, 10],
+	    type: 'shield',
+	    sprite: new _WallSprite2.default([20, 20])
+	  });
+	};
+	
+	var INVINCIBILITY = exports.INVINCIBILITY = function INVINCIBILITY() {
+	  return new _Powerup2.default({
+	    pos: STAGES.PICKUP_SPAWN(),
+	    vel: [0, 10],
+	    type: 'invincibility',
+	    sprite: new _WallSprite2.default([20, 20])
+	  });
+	};
+	
+	var FREEZE = exports.FREEZE = function FREEZE() {
+	  return new _Powerup2.default({
+	    pos: STAGES.PICKUP_SPAWN(),
+	    vel: [0, 10],
+	    type: 'FREEZE',
+	    sprite: new _WallSprite2.default([20, 20])
+	  });
+	};
+	
+	var PLAYER = exports.PLAYER = function PLAYER() {
+	  return new _Player2.default({
+	    type: 'player',
+	    pos: [450, 300],
+	    lastPos: [450, 300],
+	    vel: [0, 0],
+	    sprites: {
+	      idleRight: SPRITES.PLAYER_IDLE_RIGHT(),
+	      idleLeft: SPRITES.PLAYER_IDLE_LEFT(),
+	      runRight: SPRITES.PLAYER_RUN_RIGHT(),
+	      runLeft: SPRITES.PLAYER_RUN_LEFT()
+	    },
+	    sprite: SPRITES.PLAYER_IDLE_RIGHT()
+	  });
+	};
+	
+	var HAMMER = exports.HAMMER = function HAMMER(id) {
+	  return new _Enemy2.default({
+	    id: id,
+	    pos: [400, 0],
+	    vel: [CONSTANTS.ENEMY_ONE_VEL, 0],
+	    sprites: {
+	      runLeft: SPRITES.HAMMER_RUN_LEFT(),
+	      runRight: SPRITES.HAMMER_RUN_RIGHT()
+	    },
+	    sprite: SPRITES.HAMMER_RUN_LEFT()
+	  });
+	};
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.PICKUP_SPAWN = exports.STAGE_1 = undefined;
+	
+	var _Wall = __webpack_require__(12);
 	
 	var _Wall2 = _interopRequireDefault(_Wall);
 	
@@ -1319,7 +1430,7 @@
 	  size: [900, WT]
 	})];
 	
-	var STAGE_1_CRATE_SPAWN = exports.STAGE_1_CRATE_SPAWN = function STAGE_1_CRATE_SPAWN() {
+	var PICKUP_SPAWN = exports.PICKUP_SPAWN = function PICKUP_SPAWN() {
 	  var sample = function sample(max) {
 	    return Math.floor(Math.random() * max);
 	  };
@@ -1332,7 +1443,7 @@
 	};
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1341,7 +1452,7 @@
 	  value: true
 	});
 	
-	var _WallSprite = __webpack_require__(12);
+	var _WallSprite = __webpack_require__(13);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
@@ -1375,7 +1486,7 @@
 	exports.default = Wall;
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1421,7 +1532,46 @@
 	exports.default = WallSprite;
 
 /***/ },
-/* 13 */
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _Moveable2 = __webpack_require__(3);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Powerup = function (_Moveable) {
+	  _inherits(Powerup, _Moveable);
+	
+	  function Powerup(opts) {
+	    _classCallCheck(this, Powerup);
+	
+	    var _this = _possibleConstructorReturn(this, (Powerup.__proto__ || Object.getPrototypeOf(Powerup)).call(this, opts));
+	
+	    _this.type = opts.type;
+	    return _this;
+	  }
+	
+	  return Powerup;
+	}(_Moveable3.default);
+	
+	exports.default = Powerup;
+
+/***/ },
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
