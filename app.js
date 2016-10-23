@@ -929,11 +929,11 @@
 	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 500; // millisecs
 	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 500; // millisecs
 	
-	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
+	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 300;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
 	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4750; // every n millisecs
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 6000; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 5500; // every n millisecs
 
 /***/ },
 /* 5 */
