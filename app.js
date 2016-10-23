@@ -109,6 +109,7 @@
 	    this.setup = this.setup.bind(this);
 	    this.reset = this.reset.bind(this);
 	    this.addEnemy = this.addEnemy.bind(this);
+	    this.addPowerup = this.addPowerup.bind(this);
 	    this.removeEnemy = this.removeEnemy.bind(this);
 	    this.resetCrate = this.resetCrate.bind(this);
 	    this.renderHtml = this.renderHtml.bind(this);
@@ -147,7 +148,7 @@
 	      }
 	
 	      if (timeSinceLastPowerupSpawn >= CONSTANTS.POWERUP_SPAWN_RATE) {
-	        // this.addPowerup();
+	        this.addPowerup();
 	      }
 	
 	      update(dt);
@@ -195,7 +196,7 @@
 	      renderEntity(player);
 	      renderEntity(crate);
 	      renderEntities(stage);
-	      // renderEntities(powerups);
+	      renderEntities(powerups);
 	    }
 	
 	    // private
@@ -236,7 +237,7 @@
 	      this.gameOver = false;
 	
 	      // loads resources
-	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png']);
+	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png']);
 	      var init = function init() {
 	        _this2.main();
 	      };
@@ -257,6 +258,7 @@
 	
 	      this.enemies = [];
 	      this.currentEnemyId = 0;
+	      this.currentPowerupId = 0;
 	
 	      this.crate = (0, _UNITS.CRATE)();
 	      this.powerups = [];
@@ -269,7 +271,10 @@
 	      this.crate.update(dt);
 	      for (var i = 0; i < this.enemies.length; i++) {
 	        this.enemies[i].update(dt);
-	        // this.powerups[i].update(dt);
+	      }
+	
+	      for (var _i = 0; _i < this.powerups.length; _i++) {
+	        this.powerups[_i].update(dt);
 	      }
 	    }
 	  }, {
@@ -293,7 +298,7 @@
 	      var vy = this.player.vel[1].toFixed(0);
 	      var x = this.player.hitbox().x.toFixed(0);
 	      var y = this.player.hitbox().y.toFixed(0);
-	      this.velocityEl.innerHTML = 'Enemies: ' + this.enemies.length;
+	      this.velocityEl.innerHTML = 'Electric Shield: ' + player.electricShieldHitPoints;
 	      // this.velocityEl.innerHTML = `V: ${vx}, ${vy}`;
 	      this.positionEl.innerHTML = 'P: ' + x + ', ' + y;
 	    }
@@ -321,8 +326,9 @@
 	      var enemies = this.enemies;
 	      var crate = this.crate;
 	      var stage = this.stage;
+	      var powerups = this.powerups;
 	
-	      return { player: player, enemies: enemies, crate: crate, stage: stage };
+	      return { player: player, enemies: enemies, crate: crate, stage: stage, powerups: powerups };
 	    }
 	  }, {
 	    key: 'addEnemy',
@@ -338,12 +344,12 @@
 	      this.currentPowerupId++;
 	      var seed = Math.random();
 	      var powerup = void 0;
-	      if (seed <= 0.5) {
-	        powerup = UNITS.FREEZE();
-	      } else if (seed > 0.5 && seed < 0.85) {
-	        powerup = UNITS.SHIELD();
+	      if (seed <= 0.75) {
+	        powerup = UNITS.SHIELD(this.currentPowerupId);
+	      } else if (seed > 0.75 && seed < 0.95) {
+	        powerup = UNITS.ELECTRIC_SHIELD(this.currentPowerupId);
 	      } else {
-	        powerup = UNITS.INVINCIBILITY();
+	        powerup = UNITS.NUKE(this.currentPowerupId);
 	      }
 	      this.powerups.push(powerup);
 	    }
@@ -354,6 +360,17 @@
 	        var enemy = this.enemies[i];
 	        if (enemy.id === targetId) {
 	          this.enemies.splice(i, 1);
+	          return;
+	        }
+	      }
+	    }
+	  }, {
+	    key: 'removePowerup',
+	    value: function removePowerup(targetId) {
+	      for (var i = 0; i < this.powerups.length; i++) {
+	        var powerup = this.powerups[i];
+	        if (powerup.id === targetId) {
+	          this.powerups.splice(i, 1);
 	          return;
 	        }
 	      }
@@ -524,6 +541,9 @@
 	    _this.jumpKeyPressed = false;
 	    _this.lastJumpTime = Date.now();
 	    _this.lastRunDirection = 'right';
+	    _this.shieldHitPoints = 0;
+	    _this.electricShieldHitPoints = 0;
+	    _this.lastHit = Date.now();
 	
 	    _this.hitbox = function () {
 	      return {
@@ -566,12 +586,47 @@
 	      }
 	    }
 	  }, {
-	    key: 'handleEnemyCollision',
-	    value: function handleEnemyCollision(collisionType, enemy, game) {
-	      switch (collisionType) {
-	        default:
-	          game.reset();
+	    key: 'handlePowerupCollision',
+	    value: function handlePowerupCollision(powerupType, game) {
+	      switch (powerupType) {
+	        case 'shield':
+	          this.shieldHitPoints++;
 	          break;
+	        case 'electricShield':
+	          this.electricShieldHitPoints += 3;
+	          break;
+	        case 'nuke':
+	          game.enemies = [];
+	          break;
+	        default:
+	          break;
+	      }
+	    }
+	  }, {
+	    key: 'handleEnemyCollision',
+	    value: function handleEnemyCollision(game, enemy) {
+	      var SHIELD_RECOVERY_TIME = CONSTANTS.SHIELD_RECOVERY_TIME;
+	      var ELECTRIC_SHIELD_RECOVERY_TIME = CONSTANTS.ELECTRIC_SHIELD_RECOVERY_TIME;
+	
+	
+	      var timeSinceLastHit = Date.now() - this.lastHit;
+	
+	      // if player has electric shield
+	      var isNotRecovering = timeSinceLastHit > ELECTRIC_SHIELD_RECOVERY_TIME;
+	      if (isNotRecovering && this.electricShieldHitPoints > 0) {
+	        this.electricShieldHitPoints--;
+	        game.removeEnemy(enemy.id);
+	        this.lastHit = Date.now();
+	        return;
+	      }
+	
+	      // if player has shield
+	      isNotRecovering = timeSinceLastHit > SHIELD_RECOVERY_TIME;
+	      if (isNotRecovering && this.shieldHitPoints === 0) {
+	        game.reset();
+	      } else if (isNotRecovering) {
+	        this.shieldHitPoints--;
+	        this.lastHit = Date.now();
 	      }
 	    }
 	  }, {
@@ -711,14 +766,18 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
+	
 	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
 	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
 	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -600;
-	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
-	var JUMP_TIME = exports.JUMP_TIME = 0; //millisec
+	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 1000; // millisecs
+	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 100; // millisecs
+	
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 350;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
 	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 5000; // every n millisecs
+	
 	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 1000; // every n millisecs
 
 /***/ },
@@ -730,13 +789,52 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = undefined;
+	exports.HAMMER_RUN_LEFT = exports.HAMMER_RUN_RIGHT = exports.CRATE = exports.PLAYER_JUMP_LEFT = exports.PLAYER_JUMP_RIGHT = exports.PLAYER_FLOAT_LEFT = exports.PLAYER_FLOAT_RIGHT = exports.PLAYER_RUN_LEFT = exports.PLAYER_RUN_RIGHT = exports.PLAYER_IDLE_LEFT = exports.PLAYER_IDLE_RIGHT = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = undefined;
 	
 	var _Sprite = __webpack_require__(6);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var SHIELD_PICKUP = exports.SHIELD_PICKUP = function SHIELD_PICKUP() {
+	  return new _Sprite2.default({
+	    url: './lib/img/shieldPickup.png',
+	    pos: [0, 0],
+	    frames: [0],
+	    size: [26, 23],
+	    speed: 1,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
+	var ELECTRIC_SHIELD_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = function ELECTRIC_SHIELD_PICKUP() {
+	  return new _Sprite2.default({
+	    url: './lib/img/electricShieldPickup.png',
+	    pos: [0, 0],
+	    frames: [0],
+	    size: [26, 23],
+	    speed: 1,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
+	
+	var NUKE_PICKUP = exports.NUKE_PICKUP = function NUKE_PICKUP() {
+	  return new _Sprite2.default({
+	    url: './lib/img/nukePickup.png',
+	    pos: [0, 0],
+	    frames: [0],
+	    size: [26, 23],
+	    speed: 1,
+	    dir: 'horizontal',
+	    once: false,
+	    facing: 'right'
+	  });
+	};
 	
 	var PLAYER_IDLE_RIGHT = exports.PLAYER_IDLE_RIGHT = function PLAYER_IDLE_RIGHT() {
 	  return new _Sprite2.default({
@@ -1244,7 +1342,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.HAMMER = exports.PLAYER = exports.FREEZE = exports.INVINCIBILITY = exports.SHIELD = exports.CRATE = undefined;
+	exports.HAMMER = exports.PLAYER = exports.NUKE = exports.ELECTRIC_SHIELD = exports.SHIELD = exports.CRATE = undefined;
 	
 	var _SPRITES = __webpack_require__(5);
 	
@@ -1284,36 +1382,39 @@
 	
 	var CRATE = exports.CRATE = function CRATE() {
 	  return new _Crate2.default({
-	    pos: STAGES.PICKUP_SPAWN(),
+	    pos: STAGES.CRATE_SPAWN(),
 	    vel: [0, 10],
 	    sprite: SPRITES.CRATE()
 	  });
 	};
 	
-	var SHIELD = exports.SHIELD = function SHIELD() {
+	var SHIELD = exports.SHIELD = function SHIELD(id) {
 	  return new _Powerup2.default({
-	    pos: STAGES.PICKUP_SPAWN(),
-	    vel: [0, 10],
+	    id: id,
+	    pos: STAGES.POWERUP_SPAWN(),
+	    vel: [0, 0],
 	    type: 'shield',
-	    sprite: new _WallSprite2.default([20, 20])
+	    sprite: SPRITES.SHIELD_PICKUP()
 	  });
 	};
 	
-	var INVINCIBILITY = exports.INVINCIBILITY = function INVINCIBILITY() {
+	var ELECTRIC_SHIELD = exports.ELECTRIC_SHIELD = function ELECTRIC_SHIELD(id) {
 	  return new _Powerup2.default({
-	    pos: STAGES.PICKUP_SPAWN(),
-	    vel: [0, 10],
-	    type: 'invincibility',
-	    sprite: new _WallSprite2.default([20, 20])
+	    id: id,
+	    pos: STAGES.POWERUP_SPAWN(),
+	    vel: [0, 0],
+	    type: 'electricShield',
+	    sprite: SPRITES.ELECTRIC_SHIELD_PICKUP()
 	  });
 	};
 	
-	var FREEZE = exports.FREEZE = function FREEZE() {
+	var NUKE = exports.NUKE = function NUKE(id) {
 	  return new _Powerup2.default({
-	    pos: STAGES.PICKUP_SPAWN(),
-	    vel: [0, 10],
-	    type: 'FREEZE',
-	    sprite: new _WallSprite2.default([20, 20])
+	    id: id,
+	    pos: STAGES.POWERUP_SPAWN(),
+	    vel: [0, 0],
+	    type: 'nuke',
+	    sprite: SPRITES.NUKE_PICKUP()
 	  });
 	};
 	
@@ -1355,7 +1456,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.PICKUP_SPAWN = exports.STAGE_1 = undefined;
+	exports.POWERUP_SPAWN = exports.CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
 	var _Wall = __webpack_require__(12);
 	
@@ -1430,16 +1531,26 @@
 	  size: [900, WT]
 	})];
 	
-	var PICKUP_SPAWN = exports.PICKUP_SPAWN = function PICKUP_SPAWN() {
-	  var sample = function sample(max) {
-	    return Math.floor(Math.random() * max);
-	  };
-	  var seed = [[110, 230], [120, 230], [100, 230], [90, 230], [440, 330], [450, 330], [430, 330], [420, 330], [180, 520], [190, 520], [170, 520], [160, 520], [690, 520], [780, 230], [790, 230], [770, 230], [760, 230]][sample(17)];
+	var sample = function sample(max) {
+	  return Math.floor(Math.random() * max);
+	};
+	
+	var CRATE_SPAWN = exports.CRATE_SPAWN = function CRATE_SPAWN() {
+	  var seeds = [[110, 230], [120, 230], [100, 230], [90, 230], [440, 330], [450, 330], [430, 330], [420, 330], [180, 520], [190, 520], [170, 520], [160, 520], [690, 520], [780, 230], [790, 230], [770, 230], [760, 230]];
+	
+	  var seed = seeds[sample(seeds.length)];
 	  var multiplier = 1;
 	  if (Math.random() > 0.5) {
 	    multiplier = -1;
 	  }
-	  return [seed[0] + multiplier * sample(10), seed[1]];
+	  return [seed[0] + multiplier * sample(20), seed[1]];
+	};
+	
+	var POWERUP_SPAWN = exports.POWERUP_SPAWN = function POWERUP_SPAWN() {
+	  var seeds = [[440, 250], [110, 150], [790, 150], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 500], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100], [440, 100]];
+	
+	  var seed = seeds[sample(seeds.length)];
+	  return [seed[0], seed[1]];
 	};
 
 /***/ },
@@ -1541,6 +1652,8 @@
 	  value: true
 	});
 	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
 	var _Moveable2 = __webpack_require__(3);
 	
 	var _Moveable3 = _interopRequireDefault(_Moveable2);
@@ -1562,8 +1675,25 @@
 	    var _this = _possibleConstructorReturn(this, (Powerup.__proto__ || Object.getPrototypeOf(Powerup)).call(this, opts));
 	
 	    _this.type = opts.type;
+	    _this.id = opts.id;
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0],
+	        y: _this.pos[1],
+	        w: _this.sprite.size[0],
+	        h: _this.sprite.size[1]
+	      };
+	    };
 	    return _this;
 	  }
+	
+	  _createClass(Powerup, [{
+	    key: 'update',
+	    value: function update(dt) {
+	      this.sprite.update(dt);
+	    }
+	  }]);
 	
 	  return Powerup;
 	}(_Moveable3.default);
@@ -1618,6 +1748,7 @@
 	      var player = objects.player;
 	      var enemies = objects.enemies;
 	      var crate = objects.crate;
+	      var powerups = objects.powerups;
 	
 	      var walls = objects.stage;
 	      var handlePlayerCollisions = this.handlePlayerCollisions;
@@ -1625,7 +1756,7 @@
 	      var handleCrateCollisions = this.handleCrateCollisions;
 	
 	
-	      handlePlayerCollisions(player, [].concat(_toConsumableArray(walls), _toConsumableArray(enemies), [crate]));
+	      handlePlayerCollisions(player, [].concat(_toConsumableArray(walls), _toConsumableArray(enemies), [crate], _toConsumableArray(powerups)));
 	      handleEnemyCollisions(enemies, walls);
 	      handleCrateCollisions(crate, walls);
 	    }
@@ -1652,7 +1783,23 @@
 	              game.resetCrate();
 	              break;
 	            case 'enemy':
-	              player.handleEnemyCollision(collisionType, otherObject, game);
+	              var enemy = otherObject;
+	              player.handleEnemyCollision(game, enemy);
+	              break;
+	            case 'shield':
+	              var shield = otherObject;
+	              player.handlePowerupCollision('shield');
+	              game.removePowerup(shield.id);
+	              break;
+	            case 'electricShield':
+	              var electricShield = otherObject;
+	              player.handlePowerupCollision('electricShield');
+	              game.removePowerup(electricShield.id);
+	              break;
+	            case 'nuke':
+	              var nuke = otherObject;
+	              player.handlePowerupCollision('nuke', game);
+	              game.removePowerup(nuke.id);
 	              break;
 	            default:
 	              return;
