@@ -169,7 +169,7 @@
 	      var dt = (now - this.lastTime) / 1000.0;
 	      var timeSinceLastEnemySpawn = now - this.lastEnemySpawnTime;
 	      var timeSinceLastPowerupSpawn = now - this.lastPowerupSpawnTime;
-	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE) {
+	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE - this.score * 50) {
 	        this.addEnemy();
 	      }
 	
