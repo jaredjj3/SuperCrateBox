@@ -136,6 +136,10 @@
 	    key: 'main',
 	    value: function main() {
 	      var input = window.input;
+	      var ENEMY_SPAWN_RATE = CONSTANTS.ENEMY_SPAWN_RATE;
+	      var ENEMY_SPAWN_DIFF = CONSTANTS.ENEMY_SPAWN_DIFF;
+	      var ENEMY_SPAWN_FLOOR = CONSTANTS.ENEMY_SPAWN_FLOOR;
+	
 	
 	      if ((this.gameOver || input.isDown('R')) && !this.isResetting) {
 	        this.player.kill();
@@ -169,7 +173,10 @@
 	      var dt = (now - this.lastTime) / 1000.0;
 	      var timeSinceLastEnemySpawn = now - this.lastEnemySpawnTime;
 	      var timeSinceLastPowerupSpawn = now - this.lastPowerupSpawnTime;
-	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE - this.score * CONSTANTS.ENEMY_SPAWN_RATE_DECREASE) {
+	      var nextSpawnTime = ENEMY_SPAWN_RATE - this.score * ENEMY_SPAWN_DIFF;
+	      nextSpawnTime = nextSpawnTime <= ENEMY_SPAWN_FLOOR ? ENEMY_SPAWN_FLOOR : nextSpawnTime;
+	
+	      if (timeSinceLastEnemySpawn >= nextSpawnTime) {
 	        this.addEnemy();
 	      }
 	
@@ -941,7 +948,8 @@
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 325;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
 	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 6000; // every n millisecs
-	var ENEMY_SPAWN_RATE_DECREASE = exports.ENEMY_SPAWN_RATE_DECREASE = 150;
+	var ENEMY_SPAWN_DIFF = exports.ENEMY_SPAWN_DIFF = 150;
+	var ENEMY_SPAWN_FLOOR = exports.ENEMY_SPAWN_FLOOR = 1000;
 	
 	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 3000; // every n millisecs
 
