@@ -169,7 +169,7 @@
 	      var dt = (now - this.lastTime) / 1000.0;
 	      var timeSinceLastEnemySpawn = now - this.lastEnemySpawnTime;
 	      var timeSinceLastPowerupSpawn = now - this.lastPowerupSpawnTime;
-	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE - this.score * 15) {
+	      if (timeSinceLastEnemySpawn >= CONSTANTS.ENEMY_SPAWN_RATE - this.score * CONSTANTS.ENEMY_SPAWN_RATE_DECREASE) {
 	        this.addEnemy();
 	      }
 	
@@ -318,7 +318,6 @@
 	    key: 'updateEntities',
 	    value: function updateEntities(dt) {
 	      this.player.update(dt);
-	      this.crate.update(dt);
 	      for (var i = 0; i < this.enemies.length; i++) {
 	        var enemy = this.enemies[i];
 	        enemy.update(dt, this);
@@ -339,6 +338,7 @@
 	      for (var _i3 = 0; _i3 < this.shields.length; _i3++) {
 	        this.shields[_i3].update(dt);
 	      }
+	      this.crate.update(dt);
 	    }
 	  }, {
 	    key: 'checkPlayerBounds',
@@ -722,7 +722,16 @@
 	          game.addElectricShield();
 	          break;
 	        case 'nuke':
-	          var numberToRemove = game.enemies.length === 1 ? 1 : Math.floor(game.enemies.length * 0.75);
+	          var numEnemies = game.enemies.length;
+	          var numberToRemove = void 0;
+	          if (numEnemies === 0) {
+	            numberToRemove = 0;
+	          } else if (numEnemies === 1) {
+	            numberToRemove = 1;
+	          } else {
+	            numberToRemove = Math.floor(numEnemies * 0.8);
+	          }
+	
 	          for (var i = 0; i < numberToRemove; i++) {
 	            game.enemies[i].kill();
 	          }
@@ -931,9 +940,10 @@
 	
 	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 325;
 	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 4750; // every n millisecs
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 6000; // every n millisecs
+	var ENEMY_SPAWN_RATE_DECREASE = exports.ENEMY_SPAWN_RATE_DECREASE = 150;
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 5500; // every n millisecs
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 3000; // every n millisecs
 
 /***/ },
 /* 5 */
