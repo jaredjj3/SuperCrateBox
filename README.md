@@ -1,18 +1,35 @@
 # SuperCrateBox
-## MVP
-SuperCrateBox will have a moveable character that can jump, enemy characters that will trigger a game-over event on collision, crates that will add to the score on collision, and a "fire pit" that will remove enemy characters from the game as well as trigger a game over if the main character falls in.
 
-## Technologies, libraries, and APIs
-SuperCrateBox will use an HTML canvas element to render the content. It will mainly use vanilla JS for the game's logic. A library called Matter.js will handle movement 2d physics. A pathfinding algorithm will be needed for the floating enemies, as they will need to go into the fire pit to be 'eliminated'.
+[play now!](http://jaredjohnson.me/SuperCrateBox/)
 
-## Implementation Timeline
+<img src="./docs/gameplayDemo.gif"/>
 
-### Phase 1
-Establish the stage design and ensure that the character can move throughout the screen. Collision detection must be valid for all walls. Trigger a game over event if the character falls into the fire pit.
+SuperCrateBox is a simple but addictive game where you can collect crates, dodge enemies, and save the world! Enemies spawn faster as the game progresses, but power-ups aid you in this struggle.
 
-### Phase 2
-Implement a crate spawning system. Crates will be randomly scattered - one at a time - throughout the map. Ensure that the crates always spawn on top of the floor - not in midair or over the fire pit. The score will increase by one for each crate that is picked up.
-Implement the slow and faster walking enemies. Ensure that a game over event is triggered on collision with either enemy. The larger, slower enemies will not jump. However, the smaller, faster enemies will jump randomly.
+## Gameplay
 
-### Phase 3
-Implement the floating enemy. Ensure that this enemy will always float down and find its way to the fire pit. Ensure that a game over event is triggered on collision.
+SuperCrateBox starts with a crate and our hero, Jay.
+
+<img src="./docs/jay.png"/>
+
+Jay can move left, right, and double jump. Points are awarded when Jay picks up a <img src="./lib/img/crate.png"/>. Immediately after Jay picks up a <img src="./lib/img/crate.png"/>, another one will spawn in a random location.
+
+### Enemies
+
+Enemies, called Hammers, run around the map wreaking havoc to anything they touch... Except crates. Hammers that fall through the bottom of the map reappear at the top. As you collect more crates, more Hammers spawn.
+
+<img src="./docs/hammer.png"/>
+
+### Powerups
+
+Jay can also pick up <img src="./docs/shieldPickup.png"/> <img src="./docs/electricShieldPickup.png"/> <img src="./docs/nukePickup.png"/>
+
+#### Shield <img src="./docs/shield.png"/>
+After Jay picks up a <img src="./docs/shieldPickup.png"/>, a bubble forms around him, which protects him from 1 collision with an enemy.
+
+<img src="./docs/shieldDemo.gif"/>
+
+#### Electric Shield <img src="./docs/electricShield.png"/>
+After Jay picks up a <img src="./docs/electricShieldPickup.png"/>, electric rings form around him, which protects him from 1 collision with an enemy as well as removes the enemy from the game.
+
+<img src="./docs/electricShieldDemo.gif"/>
