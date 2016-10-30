@@ -56,7 +56,7 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
-	var _Crate = __webpack_require__(12);
+	var _Crate = __webpack_require__(3);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -64,23 +64,23 @@
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
-	var _Input = __webpack_require__(15);
+	var _Input = __webpack_require__(7);
 	
 	var _Input2 = _interopRequireDefault(_Input);
 	
-	var _Enemy = __webpack_require__(13);
+	var _Enemy = __webpack_require__(8);
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
-	var _UNITS = __webpack_require__(7);
+	var _UNITS = __webpack_require__(10);
 	
 	var UNITS = _interopRequireWildcard(_UNITS);
 	
-	var _SPRITES = __webpack_require__(5);
+	var _SPRITES = __webpack_require__(9);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(8);
+	var _STAGES = __webpack_require__(11);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -115,8 +115,11 @@
 	    this.allObjects = this.allObjects.bind(this);
 	    this.addPowerup = this.addPowerup.bind(this);
 	    this.removeEnemy = this.removeEnemy.bind(this);
+	    this.checkIfReset = this.checkIfReset.bind(this);
+	    this.checkIfPaused = this.checkIfPaused.bind(this);
 	    this.removeShield = this.removeShield.bind(this);
 	    this.renderEntity = this.renderEntity.bind(this);
+	    this.checkIfMuted = this.checkIfMuted.bind(this);
 	    this.renderEntities = this.renderEntities.bind(this);
 	    this.updateEntities = this.updateEntities.bind(this);
 	    this.killAllEnemies = this.killAllEnemies.bind(this);
@@ -135,73 +138,62 @@
 	  }, {
 	    key: 'main',
 	    value: function main() {
-	      var input = window.input;
-	      var ENEMY_SPAWN_RATE = CONSTANTS.ENEMY_SPAWN_RATE;
-	      var ENEMY_SPAWN_DIFF = CONSTANTS.ENEMY_SPAWN_DIFF;
-	      var ENEMY_SPAWN_FLOOR = CONSTANTS.ENEMY_SPAWN_FLOOR;
+	      var reset = this.reset,
+	          update = this.update,
+	          render = this.render,
+	          checkIfMuted = this.checkIfMuted,
+	          checkIfReset = this.checkIfReset,
+	          checkIfPaused = this.checkIfPaused,
+	          addEnemy = this.addEnemy,
+	          addPowerup = this.addPowerup,
+	          isPaused = this.isPaused;
+	      var ENEMY_SPAWN_RATE = CONSTANTS.ENEMY_SPAWN_RATE,
+	          ENEMY_SPAWN_DIFF = CONSTANTS.ENEMY_SPAWN_DIFF,
+	          ENEMY_SPAWN_FLOOR = CONSTANTS.ENEMY_SPAWN_FLOOR;
 	
 	
-	      if ((this.gameOver || input.isDown('R')) && !this.isResetting) {
-	        this.player.kill();
-	        this.reset();
-	        return;
-	      }
-	
-	      if (input.isDown('M') || this.volumeClicked) {
-	        if (!this.muteHeldDown) {
-	          this.audioIsPlaying = !this.audioIsPlaying;
-	          if (this.audioIsPlaying) {
-	            this.volumeEl.innerHTML = 'volume_up';
-	            this.audio.play();
-	            this.volumeClicked = false;
-	          } else {
-	            this.volumeEl.innerHTML = 'volume_off';
-	            this.audio.pause();
-	            this.volumeClicked = false;
-	          }
-	        }
-	        this.muteHeldDown = true;
-	      } else {
-	        this.muteHeldDown = false;
-	      }
-	
-	      var reset = this.reset;
-	      var update = this.update;
-	      var render = this.render;
+	      checkIfMuted();
+	      checkIfPaused();
+	      checkIfReset();
 	
 	      var now = Date.now();
 	      var dt = (now - this.lastTime) / 1000.0;
+	      this.lastTime = now;
+	
+	      if (isPaused) {
+	        window.mainLoop = requestAnimationFrame(this.main);
+	        return;
+	      }
 	      var timeSinceLastEnemySpawn = now - this.lastEnemySpawnTime;
 	      var timeSinceLastPowerupSpawn = now - this.lastPowerupSpawnTime;
 	      var nextSpawnTime = ENEMY_SPAWN_RATE - this.score * ENEMY_SPAWN_DIFF;
 	      nextSpawnTime = nextSpawnTime <= ENEMY_SPAWN_FLOOR ? ENEMY_SPAWN_FLOOR : nextSpawnTime;
 	
 	      if (timeSinceLastEnemySpawn >= nextSpawnTime) {
-	        this.addEnemy();
+	        addEnemy();
 	      }
 	
 	      if (timeSinceLastPowerupSpawn >= CONSTANTS.POWERUP_SPAWN_RATE) {
-	        this.addPowerup();
+	        addPowerup();
 	      }
 	
 	      update(dt);
 	      render();
 	
-	      this.lastTime = now;
 	      window.mainLoop = requestAnimationFrame(this.main);
 	    }
 	  }, {
 	    key: 'update',
 	    value: function update(dt) {
-	      var player = this.player;
-	      var crate = this.crate;
-	      var enemies = this.enemies;
-	      var handleInput = this.handleInput;
-	      var allObjects = this.allObjects;
-	      var updateEntities = this.updateEntities;
-	      var checkCollisions = this.checkCollisions;
-	      var checkPlayerBounds = this.checkPlayerBounds;
-	      var collisionManager = this.collisionManager;
+	      var player = this.player,
+	          crate = this.crate,
+	          enemies = this.enemies,
+	          handleInput = this.handleInput,
+	          allObjects = this.allObjects,
+	          updateEntities = this.updateEntities,
+	          checkCollisions = this.checkCollisions,
+	          checkPlayerBounds = this.checkPlayerBounds,
+	          collisionManager = this.collisionManager;
 	
 	
 	      player.handleInput(dt);
@@ -212,17 +204,17 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var ctx = this.ctx;
-	      var player = this.player;
-	      var enemies = this.enemies;
-	      var crate = this.crate;
-	      var stage = this.stage;
-	      var shields = this.shields;
-	      var powerups = this.powerups;
-	      var electricShields = this.electricShields;
-	      var renderEntity = this.renderEntity;
-	      var renderEntities = this.renderEntities;
-	      var renderHtml = this.renderHtml;
+	      var ctx = this.ctx,
+	          player = this.player,
+	          enemies = this.enemies,
+	          crate = this.crate,
+	          stage = this.stage,
+	          shields = this.shields,
+	          powerups = this.powerups,
+	          electricShields = this.electricShields,
+	          renderEntity = this.renderEntity,
+	          renderEntities = this.renderEntities,
+	          renderHtml = this.renderHtml;
 	
 	
 	      renderHtml();
@@ -259,6 +251,7 @@
 	      this.electricShields = [];
 	      this.lastEnemySpawnTime = Date.now();
 	      this.lastPowerupSpawnTime = Date.now();
+	      this.isPaused = false;
 	
 	      setTimeout(function () {
 	        _this2.score = 0;
@@ -283,6 +276,7 @@
 	      this.gameOver = false;
 	      this.isResetting = false;
 	      this.muteHeldDown = false;
+	      this.pauseHeldDown = false;
 	      this.audioIsPlaying = false;
 	      // loads resources
 	      _Resources2.default.load(['./lib/img/jay.png', './lib/img/crate.png', './lib/img/hammer.png', './lib/img/metal.png', './lib/img/shieldPickup.png', './lib/img/electricShieldPickup.png', './lib/img/nukePickup.png', './lib/img/electricShield.png', './lib/img/shield.png']);
@@ -320,6 +314,8 @@
 	      this.crate = (0, _UNITS.CRATE)();
 	      this.powerups = [];
 	      this.stage = STAGES.STAGE_1;
+	
+	      this.isPaused = false;
 	    }
 	  }, {
 	    key: 'updateEntities',
@@ -335,7 +331,12 @@
 	      }
 	
 	      for (var _i = 0; _i < this.powerups.length; _i++) {
-	        this.powerups[_i].update(dt);
+	        var powerup = this.powerups[_i];
+	        if (Date.now() - powerup.createdAt >= CONSTANTS.POWERUP_DESPAWN_RATE) {
+	          this.removePowerup(powerup.id);
+	        } else {
+	          powerup.update(dt);
+	        }
 	      }
 	
 	      for (var _i2 = 0; _i2 < this.electricShields.length; _i2++) {
@@ -358,8 +359,8 @@
 	  }, {
 	    key: 'renderHtml',
 	    value: function renderHtml() {
-	      var score = this.score;
-	      var player = this.player;
+	      var score = this.score,
+	          player = this.player;
 	
 	      this.scoreEl.innerHTML = score;
 	      if (this.score > 19) {
@@ -394,12 +395,12 @@
 	  }, {
 	    key: 'allObjects',
 	    value: function allObjects() {
-	      var player = this.player;
-	      var enemies = this.enemies;
-	      var crate = this.crate;
-	      var stage = this.stage;
-	      var powerups = this.powerups;
-	      var shields = this.shields;
+	      var player = this.player,
+	          enemies = this.enemies,
+	          crate = this.crate,
+	          stage = this.stage,
+	          powerups = this.powerups,
+	          shields = this.shields;
 	
 	      return { player: player, enemies: enemies, crate: crate, stage: stage, powerups: powerups, shields: shields };
 	    }
@@ -489,6 +490,51 @@
 	        }
 	      }
 	    }
+	  }, {
+	    key: 'checkIfMuted',
+	    value: function checkIfMuted() {
+	      var input = window.input;
+	      if (input.isDown('M') || this.volumeClicked) {
+	        if (!this.muteHeldDown) {
+	          this.audioIsPlaying = !this.audioIsPlaying;
+	          if (this.audioIsPlaying) {
+	            this.volumeEl.innerHTML = 'volume_up';
+	            this.audio.play();
+	            this.volumeClicked = false;
+	          } else {
+	            this.volumeEl.innerHTML = 'volume_off';
+	            this.audio.pause();
+	            this.volumeClicked = false;
+	          }
+	        }
+	        this.muteHeldDown = true;
+	      } else {
+	        this.muteHeldDown = false;
+	      }
+	    }
+	  }, {
+	    key: 'checkIfReset',
+	    value: function checkIfReset() {
+	      var input = window.input;
+	      if ((this.gameOver || input.isDown('R')) && !this.isResetting) {
+	        this.player.kill();
+	        this.reset();
+	        return;
+	      }
+	    }
+	  }, {
+	    key: 'checkIfPaused',
+	    value: function checkIfPaused() {
+	      var input = window.input;
+	      if (input.isDown('P')) {
+	        if (!this.pauseHeldDown) {
+	          this.isPaused = !this.isPaused;
+	        }
+	        this.pauseHeldDown = true;
+	      } else {
+	        this.pauseHeldDown = false;
+	      }
+	    }
 	  }]);
 	
 	  return SuperCrateBox;
@@ -566,9 +612,9 @@
 	  }, {
 	    key: "_load",
 	    value: function _load(url) {
-	      var resourceCache = this.resourceCache;
-	      var readyCallbacks = this.readyCallbacks;
-	      var isReady = this.isReady;
+	      var resourceCache = this.resourceCache,
+	          readyCallbacks = this.readyCallbacks,
+	          isReady = this.isReady;
 	
 	
 	      if (resourceCache[url]) {
@@ -595,12 +641,12 @@
 	  return Resources;
 	}();
 	
-	var _ref = new Resources();
+	var _ref = new Resources(),
+	    load = _ref.load,
+	    get = _ref.get,
+	    onReady = _ref.onReady,
+	    isReady = _ref.isReady;
 	
-	var load = _ref.load;
-	var get = _ref.get;
-	var onReady = _ref.onReady;
-	var isReady = _ref.isReady;
 	exports.default = {
 	  load: load,
 	  get: get,
@@ -622,7 +668,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Moveable2 = __webpack_require__(3);
+	var _Moveable2 = __webpack_require__(5);
 	
 	var _Moveable3 = _interopRequireDefault(_Moveable2);
 	
@@ -630,11 +676,11 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _SPRITES = __webpack_require__(5);
+	var _SPRITES = __webpack_require__(9);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _UNITS = __webpack_require__(7);
+	var _UNITS = __webpack_require__(10);
 	
 	var UNITS = _interopRequireWildcard(_UNITS);
 	
@@ -697,9 +743,9 @@
 	  }, {
 	    key: 'setSprite',
 	    value: function setSprite() {
-	      var vel = this.vel;
-	      var sprites = this.sprites;
-	      var isFloating = this.isFloating;
+	      var vel = this.vel,
+	          sprites = this.sprites,
+	          isFloating = this.isFloating;
 	
 	      var vx = vel[0];
 	      var vy = vel[1];
@@ -730,7 +776,7 @@
 	          break;
 	        case 'nuke':
 	          var numEnemies = game.enemies.length;
-	          var numberToRemove = void 0;
+	          var numberToRemove = numEnemies;
 	          if (numEnemies === 0) {
 	            numberToRemove = 0;
 	          } else if (numEnemies === 1) {
@@ -752,8 +798,8 @@
 	    value: function handleEnemyCollision(enemy, game) {
 	      var _this2 = this;
 	
-	      var SHIELD_RECOVERY_TIME = CONSTANTS.SHIELD_RECOVERY_TIME;
-	      var ELECTRIC_SHIELD_RECOVERY_TIME = CONSTANTS.ELECTRIC_SHIELD_RECOVERY_TIME;
+	      var SHIELD_RECOVERY_TIME = CONSTANTS.SHIELD_RECOVERY_TIME,
+	          ELECTRIC_SHIELD_RECOVERY_TIME = CONSTANTS.ELECTRIC_SHIELD_RECOVERY_TIME;
 	
 	
 	      var timeSinceLastHit = Date.now() - this.lastHit;
@@ -820,15 +866,15 @@
 	    key: 'handleInput',
 	    value: function handleInput(dt) {
 	      var input = window.input;
-	      var pos = this.pos;
-	      var vel = this.vel;
-	      var isDead = this.isDead;
-	      var sprites = this.sprites;
-	      var jumpNumber = this.jumpNumber;
-	      var handleJumpKeyPress = this.handleJumpKeyPress;
-	      var handleJumpKeyRelease = this.handleJumpKeyRelease;
-	      var PLAYER_HORIZONTAL_VEL = CONSTANTS.PLAYER_HORIZONTAL_VEL;
-	      var PLAYER_HORIZONTAL_ACC = CONSTANTS.PLAYER_HORIZONTAL_ACC;
+	      var pos = this.pos,
+	          vel = this.vel,
+	          isDead = this.isDead,
+	          sprites = this.sprites,
+	          jumpNumber = this.jumpNumber,
+	          handleJumpKeyPress = this.handleJumpKeyPress,
+	          handleJumpKeyRelease = this.handleJumpKeyRelease;
+	      var PLAYER_HORIZONTAL_VEL = CONSTANTS.PLAYER_HORIZONTAL_VEL,
+	          PLAYER_HORIZONTAL_ACC = CONSTANTS.PLAYER_HORIZONTAL_ACC;
 	
 	
 	      if (isDead) {
@@ -878,6 +924,82 @@
 	  value: true
 	});
 	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var _Moveable2 = __webpack_require__(5);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Crate = function (_Moveable) {
+	  _inherits(Crate, _Moveable);
+	
+	  function Crate(opts) {
+	    _classCallCheck(this, Crate);
+	
+	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
+	
+	    _this.type = 'crate';
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0],
+	        y: _this.pos[1],
+	        w: _this.sprite.size[0],
+	        h: _this.sprite.size[1]
+	      };
+	    };
+	    return _this;
+	  }
+	
+	  return Crate;
+	}(_Moveable3.default);
+	
+	exports.default = Crate;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
+	
+	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
+	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
+	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -600;
+	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 500; // millisecs
+	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 500; // millisecs
+	
+	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 325;
+	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
+	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 6000; // every n millisecs
+	var ENEMY_SPAWN_DIFF = exports.ENEMY_SPAWN_DIFF = 150;
+	var ENEMY_SPAWN_FLOOR = exports.ENEMY_SPAWN_FLOOR = 1000;
+	
+	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 3000; // every n millisecs
+	var POWERUP_DESPAWN_RATE = exports.POWERUP_DESPAWN_RATE = 9000; // every n millisecs
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _CONSTANTS = __webpack_require__(4);
@@ -892,12 +1014,12 @@
 	  function Moveable(opts) {
 	    _classCallCheck(this, Moveable);
 	
-	    var pos = opts.pos;
-	    var lastPos = opts.lastPos;
-	    var vel = opts.vel;
-	    var lastVel = opts.lastVel;
-	    var sprites = opts.sprites;
-	    var sprite = opts.sprite;
+	    var pos = opts.pos,
+	        lastPos = opts.lastPos,
+	        vel = opts.vel,
+	        lastVel = opts.lastVel,
+	        sprites = opts.sprites,
+	        sprite = opts.sprite;
 	
 	    this.pos = pos;
 	    this.lastPos = [0, 0];
@@ -929,32 +1051,342 @@
 	exports.default = Moveable;
 
 /***/ },
-/* 4 */
-/***/ function(module, exports) {
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var GRAVITY = exports.GRAVITY = 1400; // px/sec^2
 	
-	var PLAYER_HORIZONTAL_VEL = exports.PLAYER_HORIZONTAL_VEL = 375; // px/sec
-	var PLAYER_HORIZONTAL_ACC = exports.PLAYER_HORIZONTAL_ACC = 6000; // px/sec^2
-	var PLAYER_VERTICAL_INIT_VEL = exports.PLAYER_VERTICAL_INIT_VEL = -600;
-	var SHIELD_RECOVERY_TIME = exports.SHIELD_RECOVERY_TIME = 500; // millisecs
-	var ELECTRIC_SHIELD_RECOVERY_TIME = exports.ELECTRIC_SHIELD_RECOVERY_TIME = 500; // millisecs
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var ENEMY_ONE_VEL = exports.ENEMY_ONE_VEL = 325;
-	var ENEMY_ONE_INIT_VEL = exports.ENEMY_ONE_INIT_VEL = -400;
-	var ENEMY_SPAWN_RATE = exports.ENEMY_SPAWN_RATE = 6000; // every n millisecs
-	var ENEMY_SPAWN_DIFF = exports.ENEMY_SPAWN_DIFF = 150;
-	var ENEMY_SPAWN_FLOOR = exports.ENEMY_SPAWN_FLOOR = 1000;
+	var _Resources = __webpack_require__(1);
 	
-	var POWERUP_SPAWN_RATE = exports.POWERUP_SPAWN_RATE = 3000; // every n millisecs
+	var _Resources2 = _interopRequireDefault(_Resources);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Sprite = function () {
+	  function Sprite(opts) {
+	    _classCallCheck(this, Sprite);
+	
+	    var pos = opts.pos,
+	        size = opts.size,
+	        speed = opts.speed,
+	        frames = opts.frames,
+	        url = opts.url,
+	        dir = opts.dir,
+	        once = opts.once,
+	        facing = opts.facing;
+	
+	    this.pos = pos;
+	    this.size = size;
+	    this.speed = typeof speed === 'number' ? speed : 0;
+	    this.frames = frames;
+	    this.url = url;
+	    this.dir = dir;
+	    this.once = once;
+	    this._index = 0;
+	    this.facing = facing;
+	
+	    this.update = this.update.bind(this);
+	    this.render = this.render.bind(this);
+	  }
+	
+	  _createClass(Sprite, [{
+	    key: 'update',
+	    value: function update(dt) {
+	      var speed = this.speed;
+	
+	      this._index += speed * dt;
+	    }
+	  }, {
+	    key: 'render',
+	    value: function render(ctx) {
+	      var speed = this.speed,
+	          frames = this.frames,
+	          pos = this.pos,
+	          size = this.size,
+	          once = this.once,
+	          _index = this._index,
+	          dir = this.dir,
+	          url = this.url,
+	          facing = this.facing;
+	
+	      var frame = void 0;
+	
+	      if (speed > 0) {
+	        var max = this.frames.length;
+	        // idx is the ith picture
+	        var idx = Math.floor(_index);
+	        frame = frames[idx % max];
+	
+	        if (once && idx >= max) {
+	          this.done = true;
+	          return;
+	        }
+	      } else {
+	        frame = frames[0];
+	      }
+	
+	      var x = pos[0];
+	      var y = pos[1];
+	
+	      if (dir === 'vertical') {
+	        y += frame * size[1];
+	      } else {
+	        x += frame * size[0];
+	      }
+	
+	      switch (facing) {
+	        case 'left':
+	          ctx.translate(size[0], 0);
+	          ctx.scale(-1, 1);
+	          break;
+	        case 'leftFlipped':
+	          ctx.translate(size[0], size[0]);
+	          ctx.scale(-1, -1);
+	          break;
+	        case 'rightFlipped':
+	          ctx.translate(0, size[0]);
+	          ctx.scale(1, -1);
+	          break;
+	      }
+	
+	      ctx.drawImage(_Resources2.default.get(url), x, y, size[0], size[1], 0, 0, size[0], size[1]);
+	    }
+	  }]);
+	
+	  return Sprite;
+	}();
+	
+	exports.default = Sprite;
 
 /***/ },
-/* 5 */
+/* 7 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Input = function () {
+	  function Input() {
+	    _classCallCheck(this, Input);
+	
+	    this.pressedKeys = {};
+	
+	    this.setKey = this.setKey.bind(this);
+	  }
+	
+	  _createClass(Input, [{
+	    key: 'setup',
+	    value: function setup() {
+	      var _this = this;
+	
+	      var setKey = this.setKey;
+	
+	      document.addEventListener('keydown', function (e) {
+	        return setKey(e, true);
+	      });
+	      document.addEventListener('keyup', function (e) {
+	        return setKey(e, false);
+	      });
+	      // window.addEventListener('blur', () => { this.pressedKeys = {}; });
+	      window.input = {
+	        isDown: function isDown(key) {
+	          return _this.pressedKeys[key.toUpperCase()];
+	        }
+	      };
+	
+	      window.addEventListener("keydown", function (e) {
+	        // prevent scrolling with arrow keys
+	        if ([32, 37, 38, 39, 40, 80].indexOf(e.keyCode) > -1) {
+	          e.preventDefault();
+	        }
+	      }, false);
+	    }
+	  }, {
+	    key: 'setKey',
+	    value: function setKey(event, status) {
+	      var code = event.keyCode;
+	      var key = void 0;
+	
+	      switch (code) {
+	        case 32:
+	          key = 'SPACE';
+	          break;
+	        case 37:
+	          key = 'LEFT';
+	          break;
+	        case 38:
+	          key = 'UP';
+	          break;
+	        case 39:
+	          key = 'RIGHT';
+	          break;
+	        case 40:
+	          key = 'DOWN';
+	          break;
+	        case 77:
+	          key = 'M';
+	          break;
+	        case 80:
+	          key = 'P';
+	          break;
+	        case 82:
+	          key = 'R';
+	          break;
+	        default:
+	          key = String.fromCharCode(code);
+	      }
+	
+	      this.pressedKeys[key] = status;
+	    }
+	  }]);
+	
+	  return Input;
+	}();
+	
+	exports.default = new Input();
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _Moveable2 = __webpack_require__(5);
+	
+	var _Moveable3 = _interopRequireDefault(_Moveable2);
+	
+	var _CONSTANTS = __webpack_require__(4);
+	
+	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
+	
+	var _SPRITES = __webpack_require__(9);
+	
+	var SPRITES = _interopRequireWildcard(_SPRITES);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Enemy = function (_Moveable) {
+	  _inherits(Enemy, _Moveable);
+	
+	  function Enemy(opts) {
+	    _classCallCheck(this, Enemy);
+	
+	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
+	
+	    _this.type = 'enemy';
+	    _this.speed = _this.randomSpeed();
+	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
+	    _this.id = opts.id;
+	    _this.isDead = false;
+	
+	    _this.hitbox = function () {
+	      return {
+	        x: _this.pos[0] + 20,
+	        y: _this.pos[1] + 15,
+	        w: 27,
+	        h: 49
+	      };
+	    };
+	
+	    _this.handleCollision = _this.handleCollision.bind(_this);
+	    _this.update = _this.update.bind(_this);
+	    _this.kill = _this.kill.bind(_this);
+	    return _this;
+	  }
+	
+	  _createClass(Enemy, [{
+	    key: 'randomSpeed',
+	    value: function randomSpeed() {
+	      return CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
+	    }
+	  }, {
+	    key: 'handleCollision',
+	    value: function handleCollision(collisionType) {
+	      if (collisionType === 'right') {
+	        this.direction = 'left';
+	      } else if (collisionType === 'left') {
+	        this.direction = 'right';
+	      }
+	    }
+	  }, {
+	    key: 'kill',
+	    value: function kill() {
+	      this.isDead = true;
+	      this.vel[1] += -400;
+	      this.sprites.runRight.facing = 'rightFlipped';
+	      this.sprites.runLeft.facing = 'leftFlipped';
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(dt) {
+	      var sprites = this.sprites,
+	          direction = this.direction,
+	          speed = this.speed;
+	
+	      if (direction === 'left') {
+	        this.vel[0] = -speed;
+	        this.sprite = sprites.runRight; // facing wrong way in sprite sheet
+	      } else if (direction === 'right') {
+	        this.vel[0] = speed;
+	        this.sprite = sprites.runLeft; // facing wrong way in sprite sheet
+	      }
+	      if (this.pos[0] > 900 || this.pos[1] > 600) {
+	        this.pos[0] = 400;
+	        this.pos[1] = 0;
+	        this.speed = this.randomSpeed();
+	      }
+	      var fractionOfMaxSpeed = Math.abs(this.vel[0] / CONSTANTS.ENEMY_ONE_VEL);
+	      this.sprite.speed = 20 * fractionOfMaxSpeed;
+	
+	      this.lastPos[0] = this.pos[0];
+	      this.lastPos[1] = this.pos[1];
+	      this.lastVel[0] = this.vel[0];
+	      this.lastVel[1] = this.vel[1];
+	
+	      this.vel[1] += Math.random() > 0.9996 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
+	      this.vel[1] += CONSTANTS.GRAVITY * dt;
+	      this.pos[0] += this.vel[0] * dt;
+	      this.pos[1] += this.vel[1] * dt;
+	      this.sprite.update(dt);
+	    }
+	  }]);
+	
+	  return Enemy;
+	}(_Moveable3.default);
+	
+	exports.default = Enemy;
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1184,7 +1616,7 @@
 	    pos: [0, 0],
 	    frames: [0, 1, 2, 3, 4, 3, 2, 1],
 	    size: [64, 64],
-	    speed: 10,
+	    speed: 20,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'right'
@@ -1197,7 +1629,7 @@
 	    pos: [0, 0],
 	    frames: [0, 1, 2, 3, 4, 3, 2, 1],
 	    size: [64, 64],
-	    speed: 10,
+	    speed: 20,
 	    dir: 'horizontal',
 	    once: false,
 	    facing: 'left'
@@ -1205,123 +1637,7 @@
 	};
 
 /***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _Resources = __webpack_require__(1);
-	
-	var _Resources2 = _interopRequireDefault(_Resources);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var Sprite = function () {
-	  function Sprite(opts) {
-	    _classCallCheck(this, Sprite);
-	
-	    var pos = opts.pos;
-	    var size = opts.size;
-	    var speed = opts.speed;
-	    var frames = opts.frames;
-	    var url = opts.url;
-	    var dir = opts.dir;
-	    var once = opts.once;
-	    var facing = opts.facing;
-	
-	    this.pos = pos;
-	    this.size = size;
-	    this.speed = typeof speed === 'number' ? speed : 0;
-	    this.frames = frames;
-	    this.url = url;
-	    this.dir = dir;
-	    this.once = once;
-	    this._index = 0;
-	    this.facing = facing;
-	
-	    this.update = this.update.bind(this);
-	    this.render = this.render.bind(this);
-	  }
-	
-	  _createClass(Sprite, [{
-	    key: 'update',
-	    value: function update(dt) {
-	      var speed = this.speed;
-	
-	      this._index += speed * dt;
-	    }
-	  }, {
-	    key: 'render',
-	    value: function render(ctx) {
-	      var speed = this.speed;
-	      var frames = this.frames;
-	      var pos = this.pos;
-	      var size = this.size;
-	      var once = this.once;
-	      var _index = this._index;
-	      var dir = this.dir;
-	      var url = this.url;
-	      var facing = this.facing;
-	
-	      var frame = void 0;
-	
-	      if (speed > 0) {
-	        var max = this.frames.length;
-	        // idx is the ith picture
-	        var idx = Math.floor(_index);
-	        frame = frames[idx % max];
-	
-	        if (once && idx >= max) {
-	          this.done = true;
-	          return;
-	        }
-	      } else {
-	        frame = frames[0];
-	      }
-	
-	      var x = pos[0];
-	      var y = pos[1];
-	
-	      if (dir === 'vertical') {
-	        y += frame * size[1];
-	      } else {
-	        x += frame * size[0];
-	      }
-	
-	      switch (facing) {
-	        case 'left':
-	          ctx.translate(size[0], 0);
-	          ctx.scale(-1, 1);
-	          break;
-	        case 'leftFlipped':
-	          ctx.translate(size[0], size[0]);
-	          ctx.scale(-1, -1);
-	          break;
-	        case 'rightFlipped':
-	          ctx.translate(0, size[0]);
-	          ctx.scale(1, -1);
-	          break;
-	      }
-	
-	      ctx.drawImage(_Resources2.default.get(url), x, y, size[0], size[1], 0, 0, size[0], size[1]);
-	    }
-	  }]);
-	
-	  return Sprite;
-	}();
-	
-	exports.default = Sprite;
-
-/***/ },
-/* 7 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1331,11 +1647,11 @@
 	});
 	exports.HAMMER = exports.PLAYER = exports.NUKE_PICKUP = exports.ELECTRIC_SHIELD_PICKUP = exports.SHIELD_PICKUP = exports.SHIELD = exports.ELECTRIC_SHIELD = exports.CRATE = undefined;
 	
-	var _SPRITES = __webpack_require__(5);
+	var _SPRITES = __webpack_require__(9);
 	
 	var SPRITES = _interopRequireWildcard(_SPRITES);
 	
-	var _STAGES = __webpack_require__(8);
+	var _STAGES = __webpack_require__(11);
 	
 	var STAGES = _interopRequireWildcard(_STAGES);
 	
@@ -1343,15 +1659,15 @@
 	
 	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
 	
-	var _WallSprite = __webpack_require__(10);
+	var _WallSprite = __webpack_require__(13);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
-	var _Powerup = __webpack_require__(11);
+	var _Powerup = __webpack_require__(14);
 	
 	var _Powerup2 = _interopRequireDefault(_Powerup);
 	
-	var _Crate = __webpack_require__(12);
+	var _Crate = __webpack_require__(3);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -1359,11 +1675,11 @@
 	
 	var _Player2 = _interopRequireDefault(_Player);
 	
-	var _Enemy = __webpack_require__(13);
+	var _Enemy = __webpack_require__(8);
 	
 	var _Enemy2 = _interopRequireDefault(_Enemy);
 	
-	var _Shield = __webpack_require__(14);
+	var _Shield = __webpack_require__(15);
 	
 	var _Shield2 = _interopRequireDefault(_Shield);
 	
@@ -1464,7 +1780,7 @@
 	};
 
 /***/ },
-/* 8 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1474,7 +1790,7 @@
 	});
 	exports.POWERUP_SPAWN = exports.CRATE_SPAWN = exports.STAGE_1 = undefined;
 	
-	var _Wall = __webpack_require__(9);
+	var _Wall = __webpack_require__(12);
 	
 	var _Wall2 = _interopRequireDefault(_Wall);
 	
@@ -1566,11 +1882,14 @@
 	  var seeds = [[420, 250], [70, 150], [750, 150], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 500], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90], [420, 90]];
 	
 	  var seed = seeds[sample(seeds.length)];
-	  return [seed[0], seed[1]];
+	  var randomOffset = function randomOffset(n) {
+	    return (Math.random() > 0.5 ? -1 : 1) * Math.floor(Math.random() * n);
+	  };
+	  return [seed[0] + randomOffset(40), seed[1]];
 	};
 
 /***/ },
-/* 9 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1579,7 +1898,7 @@
 	  value: true
 	});
 	
-	var _WallSprite = __webpack_require__(10);
+	var _WallSprite = __webpack_require__(13);
 	
 	var _WallSprite2 = _interopRequireDefault(_WallSprite);
 	
@@ -1592,8 +1911,8 @@
 	
 	  _classCallCheck(this, Wall);
 	
-	  var pos = opts.pos;
-	  var size = opts.size;
+	  var pos = opts.pos,
+	      size = opts.size;
 	
 	  this.type = 'wall';
 	  this.size = size;
@@ -1613,7 +1932,7 @@
 	exports.default = Wall;
 
 /***/ },
-/* 10 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1659,7 +1978,7 @@
 	exports.default = WallSprite;
 
 /***/ },
-/* 11 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1670,7 +1989,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Moveable2 = __webpack_require__(3);
+	var _Moveable2 = __webpack_require__(5);
 	
 	var _Moveable3 = _interopRequireDefault(_Moveable2);
 	
@@ -1692,6 +2011,7 @@
 	
 	    _this.type = opts.type;
 	    _this.id = opts.id;
+	    _this.createdAt = Date.now();
 	
 	    _this.hitbox = function () {
 	      return {
@@ -1717,57 +2037,7 @@
 	exports.default = Powerup;
 
 /***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _CONSTANTS = __webpack_require__(4);
-	
-	var _Moveable2 = __webpack_require__(3);
-	
-	var _Moveable3 = _interopRequireDefault(_Moveable2);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Crate = function (_Moveable) {
-	  _inherits(Crate, _Moveable);
-	
-	  function Crate(opts) {
-	    _classCallCheck(this, Crate);
-	
-	    var _this = _possibleConstructorReturn(this, (Crate.__proto__ || Object.getPrototypeOf(Crate)).call(this, opts));
-	
-	    _this.type = 'crate';
-	
-	    _this.hitbox = function () {
-	      return {
-	        x: _this.pos[0],
-	        y: _this.pos[1],
-	        w: _this.sprite.size[0],
-	        h: _this.sprite.size[1]
-	      };
-	    };
-	    return _this;
-	  }
-	
-	  return Crate;
-	}(_Moveable3.default);
-	
-	exports.default = Crate;
-
-/***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1778,130 +2048,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Moveable2 = __webpack_require__(3);
-	
-	var _Moveable3 = _interopRequireDefault(_Moveable2);
-	
-	var _CONSTANTS = __webpack_require__(4);
-	
-	var CONSTANTS = _interopRequireWildcard(_CONSTANTS);
-	
-	var _SPRITES = __webpack_require__(5);
-	
-	var SPRITES = _interopRequireWildcard(_SPRITES);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Enemy = function (_Moveable) {
-	  _inherits(Enemy, _Moveable);
-	
-	  function Enemy(opts) {
-	    _classCallCheck(this, Enemy);
-	
-	    var _this = _possibleConstructorReturn(this, (Enemy.__proto__ || Object.getPrototypeOf(Enemy)).call(this, opts));
-	
-	    _this.type = 'enemy';
-	    _this.speed = _this.randomSpeed();
-	    _this.direction = Math.random() > 0.5 ? 'left' : 'right';
-	    _this.id = opts.id;
-	    _this.isDead = false;
-	
-	    _this.hitbox = function () {
-	      return {
-	        x: _this.pos[0] + 20,
-	        y: _this.pos[1] + 15,
-	        w: 27,
-	        h: 49
-	      };
-	    };
-	
-	    _this.handleCollision = _this.handleCollision.bind(_this);
-	    _this.update = _this.update.bind(_this);
-	    _this.kill = _this.kill.bind(_this);
-	    return _this;
-	  }
-	
-	  _createClass(Enemy, [{
-	    key: 'randomSpeed',
-	    value: function randomSpeed() {
-	      return CONSTANTS.ENEMY_ONE_VEL * (0.8 + Math.random() * 0.3);
-	    }
-	  }, {
-	    key: 'handleCollision',
-	    value: function handleCollision(collisionType) {
-	      if (collisionType === 'right') {
-	        this.direction = 'left';
-	      } else if (collisionType === 'left') {
-	        this.direction = 'right';
-	      }
-	    }
-	  }, {
-	    key: 'kill',
-	    value: function kill() {
-	      this.isDead = true;
-	      this.vel[1] += -400;
-	      this.sprites.runRight.facing = 'rightFlipped';
-	      this.sprites.runLeft.facing = 'leftFlipped';
-	    }
-	  }, {
-	    key: 'update',
-	    value: function update(dt) {
-	      var sprites = this.sprites;
-	      var direction = this.direction;
-	      var speed = this.speed;
-	
-	      if (direction === 'left') {
-	        this.vel[0] = -speed;
-	        this.sprite = sprites.runRight; // facing wrong way in sprite sheet
-	      } else if (direction === 'right') {
-	        this.vel[0] = speed;
-	        this.sprite = sprites.runLeft; // facing wrong way in sprite sheet
-	      }
-	      if (this.pos[0] > 900 || this.pos[1] > 600) {
-	        this.pos[0] = 400;
-	        this.pos[1] = 0;
-	        this.speed = this.randomSpeed();
-	      }
-	
-	      this.lastPos[0] = this.pos[0];
-	      this.lastPos[1] = this.pos[1];
-	      this.lastVel[0] = this.vel[0];
-	      this.lastVel[1] = this.vel[1];
-	
-	      this.vel[1] += Math.random() > 0.9998 ? CONSTANTS.ENEMY_ONE_INIT_VEL : 0;
-	      this.vel[1] += CONSTANTS.GRAVITY * dt;
-	      this.pos[0] += this.vel[0] * dt;
-	      this.pos[1] += this.vel[1] * dt;
-	      this.sprite.update(dt);
-	    }
-	  }]);
-	
-	  return Enemy;
-	}(_Moveable3.default);
-	
-	exports.default = Enemy;
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _Moveable2 = __webpack_require__(3);
+	var _Moveable2 = __webpack_require__(5);
 	
 	var _Moveable3 = _interopRequireDefault(_Moveable2);
 	
@@ -1939,97 +2086,6 @@
 	exports.default = Shield;
 
 /***/ },
-/* 15 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var Input = function () {
-	  function Input() {
-	    _classCallCheck(this, Input);
-	
-	    this.pressedKeys = {};
-	
-	    this.setKey = this.setKey.bind(this);
-	  }
-	
-	  _createClass(Input, [{
-	    key: 'setup',
-	    value: function setup() {
-	      var _this = this;
-	
-	      var setKey = this.setKey;
-	
-	      document.addEventListener('keydown', function (e) {
-	        return setKey(e, true);
-	      });
-	      document.addEventListener('keyup', function (e) {
-	        return setKey(e, false);
-	      });
-	      // window.addEventListener('blur', () => { this.pressedKeys = {}; });
-	      window.input = {
-	        isDown: function isDown(key) {
-	          return _this.pressedKeys[key.toUpperCase()];
-	        }
-	      };
-	
-	      window.addEventListener("keydown", function (e) {
-	        // prevent scrolling with arrow keys
-	        if ([32, 37, 38, 39, 40, 80].indexOf(e.keyCode) > -1) {
-	          e.preventDefault();
-	        }
-	      }, false);
-	    }
-	  }, {
-	    key: 'setKey',
-	    value: function setKey(event, status) {
-	      var code = event.keyCode;
-	      var key = void 0;
-	
-	      switch (code) {
-	        case 32:
-	          key = 'SPACE';
-	          break;
-	        case 37:
-	          key = 'LEFT';
-	          break;
-	        case 38:
-	          key = 'UP';
-	          break;
-	        case 39:
-	          key = 'RIGHT';
-	          break;
-	        case 40:
-	          key = 'DOWN';
-	          break;
-	        case 77:
-	          key = 'M';
-	          break;
-	        case 82:
-	          key = 'R';
-	          break;
-	        default:
-	          key = String.fromCharCode(code);
-	      }
-	
-	      this.pressedKeys[key] = status;
-	    }
-	  }]);
-	
-	  return Input;
-	}();
-	
-	exports.default = new Input();
-
-/***/ },
 /* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -2041,7 +2097,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _Crate = __webpack_require__(12);
+	var _Crate = __webpack_require__(3);
 	
 	var _Crate2 = _interopRequireDefault(_Crate);
 	
@@ -2074,15 +2130,15 @@
 	  _createClass(CollisionManager, [{
 	    key: 'handleCollisions',
 	    value: function handleCollisions(objects) {
-	      var player = objects.player;
-	      var enemies = objects.enemies;
-	      var crate = objects.crate;
-	      var powerups = objects.powerups;
+	      var player = objects.player,
+	          enemies = objects.enemies,
+	          crate = objects.crate,
+	          powerups = objects.powerups;
 	
 	      var walls = objects.stage;
-	      var handlePlayerCollisions = this.handlePlayerCollisions;
-	      var handleEnemyCollisions = this.handleEnemyCollisions;
-	      var handleCrateCollisions = this.handleCrateCollisions;
+	      var handlePlayerCollisions = this.handlePlayerCollisions,
+	          handleEnemyCollisions = this.handleEnemyCollisions,
+	          handleCrateCollisions = this.handleCrateCollisions;
 	
 	
 	      handlePlayerCollisions(player, [].concat(_toConsumableArray(walls), _toConsumableArray(enemies), [crate], _toConsumableArray(powerups)));
@@ -2095,11 +2151,11 @@
 	      if (player.isDead) {
 	        return;
 	      }
-	      var game = this.game;
-	      var typeOfCollision = this.typeOfCollision;
-	      var entityHitWall = this.entityHitWall;
-	      var isPlayerFloating = this.isPlayerFloating;
-	      var playerPickedUpCrate = this.playerPickedUpCrate;
+	      var game = this.game,
+	          typeOfCollision = this.typeOfCollision,
+	          entityHitWall = this.entityHitWall,
+	          isPlayerFloating = this.isPlayerFloating,
+	          playerPickedUpCrate = this.playerPickedUpCrate;
 	
 	      for (var i = 0; i < otherObjects.length; i++) {
 	        var otherObject = otherObjects[i];
@@ -2144,8 +2200,8 @@
 	  }, {
 	    key: 'handleEnemyCollisions',
 	    value: function handleEnemyCollisions(enemies, walls) {
-	      var typeOfCollision = this.typeOfCollision;
-	      var entityHitWall = this.entityHitWall;
+	      var typeOfCollision = this.typeOfCollision,
+	          entityHitWall = this.entityHitWall;
 	
 	      for (var i = 0; i < enemies.length; i++) {
 	        var enemy = enemies[i];
@@ -2165,8 +2221,8 @@
 	  }, {
 	    key: 'handleCrateCollisions',
 	    value: function handleCrateCollisions(crate, walls) {
-	      var typeOfCollision = this.typeOfCollision;
-	      var entityHitWall = this.entityHitWall;
+	      var typeOfCollision = this.typeOfCollision,
+	          entityHitWall = this.entityHitWall;
 	
 	      for (var i = 0; i < walls.length; i++) {
 	        var wall = walls[i];
@@ -2179,12 +2235,12 @@
 	  }, {
 	    key: 'entityHitWall',
 	    value: function entityHitWall(entity, collisionType) {
-	      var resetXPos = this.resetXPos;
-	      var resetYPos = this.resetYPos;
-	      var resetXVel = this.resetXVel;
-	      var nullXVel = this.nullXVel;
-	      var resetYVel = this.resetYVel;
-	      var nullYVel = this.nullYVel;
+	      var resetXPos = this.resetXPos,
+	          resetYPos = this.resetYPos,
+	          resetXVel = this.resetXVel,
+	          nullXVel = this.nullXVel,
+	          resetYVel = this.resetYVel,
+	          nullYVel = this.nullYVel;
 	
 	      if (entity.type === 'player') {
 	
@@ -2281,10 +2337,10 @@
 	      var rect2 = obj2.hitbox();
 	
 	      if (collisionExists(rect1, rect2)) {
-	        var _collisionRight = this._collisionRight;
-	        var _collisionLeft = this._collisionLeft;
-	        var _collisionTop = this._collisionTop;
-	        var _collisionBottom = this._collisionBottom;
+	        var _collisionRight = this._collisionRight,
+	            _collisionLeft = this._collisionLeft,
+	            _collisionTop = this._collisionTop,
+	            _collisionBottom = this._collisionBottom;
 	
 	
 	        var l = _collisionLeft(rect1, rect2);
