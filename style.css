@@ -148,3 +148,11 @@ ul {
   height: 64px;
   display: inline-block;
 }
+
+.high-score {
+  font-size: 36px;
+  color: yellow;
+  position: absolute;
+  left: 0;
+  top: 60px;
+}
