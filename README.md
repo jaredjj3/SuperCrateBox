@@ -1,6 +1,6 @@
 # SuperCrateBox
 
-[play now!](http://jaredjohnson.me/SuperCrateBox/)
+## [Live](https://jaredjj3.github.io/SuperCrateBox/)
 
 <img src="./docs/gameplayDemo.gif"/>
 
